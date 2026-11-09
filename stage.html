@@ -2197,10 +2197,29 @@ async function viewDetails(id) {
         ? `<span style="color:#16845b;font-weight:600">
                Đã hoàn tất giao hàng
            </span>`
-        : s.delivery_status === "FAILED"
-        ? `<span style="color:#b45309;font-weight:600">
-               Giao thất bại – cần xử lý
-           </span>`
+      
+: s.delivery_status === "FAILED"
+? `
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <span style="color:#b45309;font-weight:600">
+            Giao thất bại
+        </span>
+        ${
+            shipments.some(x =>
+                Number(x.retry_of_shipment_id) ===
+                Number(s.shipment_id)
+            )
+            ? `<span style="color:#64748b">
+                   Đã tạo chuyến giao lại
+               </span>`
+            : `<button class="btn btn-primary"
+                   onclick="showRetryShipmentForm(${Number(s.shipment_id)})">
+                   Tạo chuyến giao lại
+               </button>`
+        }
+    </div>
+`
+
         : `
             <button class="btn btn-light"
                 onclick="updateShipmentStatus(${Number(s.shipment_id)},'DELIVERED')">
@@ -2232,6 +2251,135 @@ async function viewDetails(id) {
     }
 
     openModal("Chi tiết công đoạn",html);
+}
+
+function showRetryShipmentForm(shipmentId) {
+    const shipment = (db.shipments || []).find(
+        s => Number(s.shipment_id) === Number(shipmentId)
+    );
+
+    if (!shipment) {
+        return toast("Không tìm thấy chuyến xe.");
+    }
+
+    if (shipment.delivery_status !== "FAILED") {
+        return toast("Chỉ được giao lại chuyến thất bại.");
+    }
+
+    const alreadyRetried = (db.shipments || []).some(
+        s => Number(s.retry_of_shipment_id) ===
+            Number(shipmentId)
+    );
+
+    if (alreadyRetried) {
+        return toast("Chuyến này đã có chuyến giao lại.");
+    }
+
+    const packageIds = shipment.package_ids || [];
+
+    openModal("Tạo chuyến giao lại", `
+        <div class="notice">
+            Chuyến cũ: ${esc(shipment.shipment_code)}.
+            Số kiện giao lại: ${packageIds.length}.
+            Không trừ tồn kho hoặc ghi nhận xuất kho lần hai.
+        </div>
+
+        <div class="form-grid">
+            <div class="field">
+                <label>Đơn vị vận chuyển *</label>
+                <input id="retryCarrier"
+                    value="${esc(shipment.carrier_name || "")}">
+            </div>
+            <div class="field">
+                <label>Biển số xe</label>
+                <input id="retryVehicle">
+            </div>
+            <div class="field">
+                <label>Tên tài xế</label>
+                <input id="retryDriver">
+            </div>
+            <div class="field">
+                <label>Số điện thoại tài xế</label>
+                <input id="retryPhone">
+            </div>
+            <div class="field">
+                <label>Thời gian dự kiến xuất phát</label>
+                <input id="retryDeparture" type="datetime-local">
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button id="retrySubmitButton"
+                class="btn btn-primary"
+                onclick="submitRetryShipment(${Number(shipmentId)})">
+                Xác nhận tạo chuyến giao lại
+            </button>
+        </div>
+    `);
+}
+
+async function submitRetryShipment(shipmentId) {
+    const button = document.getElementById(
+        "retrySubmitButton"
+    );
+
+    if (button?.disabled) return;
+
+    const carrier = document.getElementById(
+        "retryCarrier"
+    ).value.trim();
+
+    if (!carrier) {
+        return toast("Vui lòng nhập đơn vị vận chuyển.");
+    }
+
+    const departure = document.getElementById(
+        "retryDeparture"
+    ).value;
+
+    const payload = {
+        action: "retry_delivery",
+        shipment_id: shipmentId,
+        carrier_name: carrier,
+        vehicle_number: document.getElementById(
+            "retryVehicle"
+        ).value.trim(),
+        driver_name: document.getElementById(
+            "retryDriver"
+        ).value.trim(),
+        driver_phone: document.getElementById(
+            "retryPhone"
+        ).value.trim(),
+        planned_departure: departure
+            ? departure.replace("T", " ") + ":00"
+            : ""
+    };
+
+    if (button) {
+        button.disabled = true;
+        button.textContent = "Đang tạo chuyến...";
+    }
+
+    try {
+        const result = await postJson(
+            "shipping",
+            payload
+        );
+
+        closeModal();
+        toast(result.message);
+        await loadData();
+
+    } catch (error) {
+        toast(error.message);
+
+    } finally {
+        if (button && button.isConnected) {
+            button.disabled = false;
+            button.textContent =
+                "Xác nhận tạo chuyến giao lại";
+        }
+    }
 }
 
 async function updateShipmentStatus(shipmentId,status) {
