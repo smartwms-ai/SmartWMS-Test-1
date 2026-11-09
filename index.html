@@ -762,6 +762,7 @@
                         <th>Chờ đóng</th>
                         <th>Chờ xuất</th>
                         <th>Đã xuất</th>
+                        <th>Chênh lệch</th>
                     </tr>
                 </thead>
 
@@ -776,7 +777,7 @@
      JAVASCRIPT GỐC
 ================================== -->
 
-<script src="wms-demo.js?v=7"></script>
+<script src="wms-demo.js?v=8"></script>
 
 <script>
 document.getElementById("today").textContent =
@@ -889,6 +890,11 @@ function renderOverview() {
                 <td>${formatter.format(item.toPack || 0)}</td>
                 <td>${formatter.format(item.toShip || 0)}</td>
                 <td>${formatter.format(item.shipped || 0)}</td>
+                <td style="font-weight:700;color:${Math.abs(item.difference) < 0.000001 ? '#15803d' : '#dc2626'}">
+    ${Math.abs(item.difference) < 0.000001
+        ? "0 - Khớp"
+        : formatter.format(item.difference) + " - Lệch"}
+</td>
             </tr>
         `).join("");
 
