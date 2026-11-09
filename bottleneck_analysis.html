@@ -1090,8 +1090,12 @@ if (!hasWorkload) {
 
     const kpis = [
       {
-        label: "Công đoạn cần ưu tiên",
-        value: hasWorkload ? stageName : "Không có",
+        
+label: "Công đoạn cần ưu tiên",
+value: hasWorkload && risk !== "LOW"
+  ? stageName
+  : "Không có",
+
         note: hasWorkload
           ? riskLabels[risk]
           : "Chưa có khối lượng chờ"
