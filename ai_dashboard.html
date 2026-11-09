@@ -299,10 +299,11 @@ function countOrders(stage) {
             });
     }
 
-    return orderIds.size;
+  return orderIds.size;
 }
 
-                stage: s.stage.toUpperCase(),
+const rows = stats.map(s => ({
+    stage: s.stage.toUpperCase(),
                 waiting_tasks: s.waiting + s.ready,
                 waiting_quantity: s.waitingQty,
                 employee_count: s.workers,
