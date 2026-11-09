@@ -6,15 +6,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dự đoán AI | SmartWMS</title>
 
-    <!-- CSS gốc -->
     <link rel="stylesheet" href="style.css?v=7">
 
-    <!-- Font chữ đồng bộ -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-    <!-- CSS đồng bộ toàn website -->
     <link rel="stylesheet" href="smartwms-unified.css?v=1">
 </head>
 
@@ -78,86 +75,166 @@
         </p>
     </section>
 
-<section class="panel" id="rf-input-panel">
-  <h2>Random Forest Regression — Kiểm tra dữ liệu đầu vào</h2>
-  <p class="card-note">
-    Các giá trị có sẵn được lấy từ WMS. Các biến chưa có dữ liệu
-    sẽ được đánh dấu; hệ thống chưa tự động suy đoán giá trị.
-  </p>
-  <div id="rf-input-status">Đang kiểm tra dữ liệu...</div>
-</section>
+    <section class="panel" id="rf-input-panel">
+        <h2>Random Forest Regression — Kiểm tra dữ liệu đầu vào</h2>
 
-<script>
-(async function () {
-  const target = document.getElementById("rf-input-status");
-  const stats = WmsDemo.analysis();
+        <p class="card-note">
+            Các giá trị có sẵn được lấy từ WMS.
+            Các biến chưa có dữ liệu sẽ được đánh dấu;
+            hệ thống chưa tự động suy đoán giá trị.
+        </p>
 
-  const rows = stats.map(s => ({
-    stage: s.stage.toUpperCase(),
-    waiting_tasks: s.waiting + s.ready,
-    waiting_quantity: s.waitingQty,
-    employee_count: s.workers,
-    sku_count: null,
-    pallet_count: null,
-    order_count: null,
-    active_equipment_count: null,
-    shift: null,
-    complexity_level: null
-  }));
-
-  const labels = {
-    stage: "Công đoạn",
-    waiting_tasks: "Số công việc chờ",
-    waiting_quantity: "Số lượng chờ",
-    employee_count: "Số nhân viên",
-    sku_count: "Số SKU",
-    pallet_count: "Số pallet",
-    order_count: "Số đơn hàng",
-    active_equipment_count: "Thiết bị hoạt động",
-    shift: "Ca làm việc",
-    complexity_level: "Độ phức tạp"
-  };
-
-  const table = document.createElement("table");
-  table.style.width = "100%";
-  table.innerHTML =
-    "<thead><tr><th>Biến</th>" +
-    rows.map(r => "<th>" + r.stage + "</th>").join("") +
-    "</tr></thead><tbody>" +
-    Object.keys(labels).map(key =>
-      "<tr><td>" + labels[key] + "</td>" +
-      rows.map(r =>
-        "<td>" + (
-          r[key] === null
-            ? "Chưa có"
-            : String(r[key])
-        ) + "</td>"
-      ).join("") + "</tr>"
-    ).join("") + "</tbody>";
-
-  const wrapper = document.createElement("div");
-  wrapper.className = "table-wrap";
-  wrapper.appendChild(table);
-
-  target.replaceChildren(wrapper);
-
-  const note = document.createElement("p");
-  note.className = "card-note";
-  note.textContent =
-    "Chưa chạy dự báo tự động: cần bổ sung và xác minh " +
-    "các biến còn thiếu trước khi gọi Random Forest.";
-  target.appendChild(note);
-})();
-</script>
+        <div id="rf-input-status">
+            Đang kiểm tra dữ liệu...
+        </div>
+    </section>
 
     <div id="video-results"></div>
 
 </main>
 
-<!-- Giữ nguyên JavaScript xử lý dữ liệu -->
+<!-- Nạp các thư viện trước -->
 <script src="wms-demo.js?v=7"></script>
 <script src="rf_browser.js?v=1"></script>
 <script src="wms-video.js?v=7"></script>
+
+<!-- Sau đó mới chạy code kiểm tra dữ liệu AI -->
+<script>
+(function () {
+    "use strict";
+
+    const target = document.getElementById("rf-input-status");
+
+    const labels = {
+        stage: "Công đoạn",
+        waiting_tasks: "Số công việc chờ",
+        waiting_quantity: "Số lượng chờ",
+        employee_count: "Số nhân viên",
+        sku_count: "Số SKU",
+        pallet_count: "Số pallet",
+        order_count: "Số đơn hàng",
+        active_equipment_count: "Thiết bị hoạt động",
+        shift: "Ca làm việc",
+        complexity_level: "Độ phức tạp"
+    };
+
+    const stageNames = {
+        receiving: "Nhận hàng",
+        putaway: "Cất hàng",
+        picking: "Lấy hàng",
+        packing: "Đóng gói",
+        shipping: "Xuất hàng"
+    };
+
+    function renderRFInputs() {
+        try {
+            if (!window.WmsDemo ||
+                typeof WmsDemo.analysis !== "function") {
+                throw new Error("Chưa tải được dữ liệu WMS.");
+            }
+
+            const stats = WmsDemo.analysis();
+
+            const rows = stats.map(s => ({
+                stage: s.stage.toUpperCase(),
+                waiting_tasks: s.waiting + s.ready,
+                waiting_quantity: s.waitingQty,
+                employee_count: s.workers,
+
+                // Các biến chưa được xác minh trong WMS
+                sku_count: null,
+                pallet_count: null,
+                order_count: null,
+                active_equipment_count: null,
+                shift: null,
+                complexity_level: null
+            }));
+
+            const table = document.createElement("table");
+            table.style.width = "100%";
+
+            const thead = document.createElement("thead");
+            const headerRow = document.createElement("tr");
+
+            const firstHeader = document.createElement("th");
+            firstHeader.textContent = "Biến đầu vào";
+            headerRow.appendChild(firstHeader);
+
+            rows.forEach(row => {
+                const th = document.createElement("th");
+                th.textContent =
+                    stageNames[row.stage.toLowerCase()] ||
+                    row.stage;
+                headerRow.appendChild(th);
+            });
+
+            thead.appendChild(headerRow);
+            table.appendChild(thead);
+
+            const tbody = document.createElement("tbody");
+
+            Object.entries(labels).forEach(([key, label]) => {
+                const tr = document.createElement("tr");
+
+                const nameCell = document.createElement("td");
+                nameCell.textContent = label;
+                tr.appendChild(nameCell);
+
+                rows.forEach(row => {
+                    const td = document.createElement("td");
+                    const value = row[key];
+
+                    if (value === null || value === undefined) {
+                        td.textContent = "Chưa có";
+                        td.style.color = "#b45309";
+                    } else {
+                        td.textContent = String(value);
+                    }
+
+                    tr.appendChild(td);
+                });
+
+                tbody.appendChild(tr);
+            });
+
+            table.appendChild(tbody);
+
+            const wrapper = document.createElement("div");
+            wrapper.className = "table-wrap";
+            wrapper.appendChild(table);
+
+            const note = document.createElement("p");
+            note.className = "card-note";
+            note.textContent =
+                "Đây là bảng kiểm tra dữ liệu đầu vào. " +
+                "Chưa chạy dự báo tự động vì một số biến " +
+                "của Random Forest chưa được xác minh.";
+
+            target.replaceChildren(wrapper, note);
+
+        } catch (error) {
+            console.error("Lỗi kiểm tra dữ liệu AI:", error);
+
+            target.textContent =
+                "Không thể đọc dữ liệu WMS: " + error.message;
+        }
+    }
+
+    renderRFInputs();
+
+    // Cập nhật bảng khi dữ liệu WMS thay đổi
+    window.addEventListener("wms:change", renderRFInputs);
+
+    window.addEventListener("pageshow", renderRFInputs);
+
+    window.addEventListener("storage", function (event) {
+        if (event.key === WmsDemo.storageKey) {
+            renderRFInputs();
+        }
+    });
+
+})();
+</script>
 
 </body>
 </html>
