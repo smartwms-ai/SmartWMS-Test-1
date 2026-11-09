@@ -138,6 +138,54 @@
             const stats = WmsDemo.analysis();
 const state = JSON.parse(WmsDemo.exportData());
 
+function countSku(stage) {
+    const collections = {
+        receiving: "receipts",
+        putaway: "putaways",
+        picking: "pickings",
+        packing: "packings",
+        shipping: "shipping_orders"
+    };
+
+    const tasks = (state[collections[stage]] || [])
+        .filter(task =>
+            task.status === "PENDING" ||
+            task.status === "IN_PROGRESS"
+        );
+
+    const productIds = new Set();
+
+    function addProduct(id) {
+        if (id !== null && id !== undefined && id !== "") {
+            productIds.add(String(id));
+        }
+    }
+
+    for (const task of tasks) {
+        if (stage === "receiving") {
+            (task.items || []).forEach(item =>
+                addProduct(item.product_id)
+            );
+        }
+
+        if (stage === "putaway") {
+            const batch = (state.batches || []).find(b =>
+                Number(b.batch_id) === Number(task.batch_id)
+            );
+            if (batch) addProduct(batch.product_id);
+        }
+
+        if (["picking", "packing", "shipping"].includes(stage)) {
+            const order = (state.orders || []).find(o =>
+                Number(o.order_id) === Number(task.order_id)
+            );
+            if (order) addProduct(order.product_id);
+        }
+    }
+
+    return productIds.size > 0 ? productIds.size : null;
+}
+
 const stageCollections = {
     receiving: "receipts",
     putaway: "putaways",
@@ -172,7 +220,7 @@ function countOrders(stage) {
                 employee_count: s.workers,
 
                 // Các biến chưa được xác minh trong WMS
-                sku_count: null,
+               sku_count: countSku(s.stage),
                 pallet_count: null,
 order_count: countOrders(s.stage),                
                 active_equipment_count: null,
