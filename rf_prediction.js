@@ -1,207 +1,377 @@
 
 (function () {
-    "use strict";
+  "use strict";
 
-    const stageNames = {
-        RECEIVING: "Nhận hàng",
-        PUTAWAY: "Cất hàng",
-        PICKING: "Lấy hàng",
-        PACKING: "Đóng gói",
-        SHIPPING: "Xuất hàng"
-    };
+  const stageNames = {
+    RECEIVING: "Nhận hàng",
+    PUTAWAY: "Cất hàng",
+    PICKING: "Lấy hàng",
+    PACKING: "Đóng gói",
+    SHIPPING: "Xuất hàng"
+  };
 
-    const featureNames = [
-        "stage",
-        "waiting_tasks",
-        "waiting_quantity",
-        "employee_count",
-        "sku_count",
-        "pallet_count",
-        "order_count",
-        "active_equipment_count",
-        "shift",
-        "complexity_level"
-    ];
+  const featureNames = [
+    "stage",
+    "waiting_tasks",
+    "waiting_quantity",
+    "employee_count",
+    "sku_count",
+    "pallet_count",
+    "order_count",
+    "active_equipment_count",
+    "shift",
+    "complexity_level"
+  ];
 
-    const numericFeatures = [
-        "waiting_tasks",
-        "waiting_quantity",
-        "employee_count",
-        "sku_count",
-        "pallet_count",
-        "order_count",
-        "active_equipment_count"
-    ];
+  const numericFeatures = featureNames.filter(
+    key => !["stage", "shift", "complexity_level"].includes(key)
+  );
 
-    const target = document.getElementById("rf-prediction-results");
+  const labels = {
+    waiting_tasks: "Số công việc chờ",
+    waiting_quantity: "Số lượng chờ",
+    employee_count: "Số nhân viên",
+    sku_count: "Số SKU",
+    pallet_count: "Số pallet",
+    order_count: "Số đơn/phiếu",
+    active_equipment_count: "Thiết bị hoạt động"
+  };
 
-    function makeElement(tag, text, className) {
-        const element = document.createElement(tag);
-        element.textContent = text;
-        if (className) element.className = className;
-        return element;
+  // Khoảng min-max theo từng công đoạn
+  // Từ dữ liệu SQL huấn luyện Random Forest
+  const trainingRanges = {
+    RECEIVING: [
+      [1, 5], [100, 520], [2, 6],
+      [0, 10], [0, 3], [1, 3], [1, 3]
+    ],
+    PUTAWAY: [
+      [1, 5], [90, 500], [2, 6],
+      [0, 9], [0, 3], [1, 3], [1, 2]
+    ],
+    PICKING: [
+      [1, 4], [45, 360], [2, 7],
+      [0, 5], [1, 4], [1, 3], [1, 2]
+    ],
+    PACKING: [
+      [1, 4], [35, 390], [2, 7],
+      [0, 3], [1, 4], [1, 3], [1, 1]
+    ],
+    SHIPPING: [
+      [1, 4], [35, 425], [2, 7],
+      [0, 3], [1, 4], [1, 2], [1, 1]
+    ]
+  };
+
+  const rangeKeys = [
+    "waiting_tasks",
+    "waiting_quantity",
+    "sku_count",
+    "pallet_count",
+    "order_count",
+    "employee_count",
+    "active_equipment_count"
+  ];
+
+  const target = document.getElementById(
+    "rf-prediction-results"
+  );
+
+  function element(tag, content, className) {
+    const node = document.createElement(tag);
+    node.textContent = content;
+
+    if (className) {
+      node.className = className;
     }
 
-    function validate(row, model) {
-        const errors = [];
-        const warnings = [];
+    return node;
+  }
 
-        for (const key of featureNames) {
-            if (row[key] === null ||
-                row[key] === undefined ||
-                row[key] === "") {
-                errors.push("Thiếu " + key);
-            }
+  function validate(row, model) {
+    const errors = [];
+    const warnings = [];
+
+    // Kiểm tra thiếu dữ liệu
+    for (const key of featureNames) {
+      if (
+        row[key] === null ||
+        row[key] === undefined ||
+        row[key] === ""
+      ) {
+        errors.push(
+          "Thiếu " + (labels[key] || key)
+        );
+      }
+    }
+
+    // Kiểm tra dữ liệu số
+    for (const key of numericFeatures) {
+      const value = row[key];
+
+      if (
+        value === null ||
+        value === undefined ||
+        value === ""
+      ) {
+        continue;
+      }
+
+      if (
+        !Number.isFinite(Number(value)) ||
+        Number(value) < 0
+      ) {
+        errors.push(
+          "Giá trị không hợp lệ: " +
+          (labels[key] || key)
+        );
+      }
+    }
+
+    // Kiểm tra công đoạn
+    if (!trainingRanges[row.stage]) {
+      errors.push("Công đoạn không hợp lệ");
+    }
+
+    // Kiểm tra biến phân loại
+    if (
+      Array.isArray(model.categorical) &&
+      Array.isArray(model.categories)
+    ) {
+      model.categorical.forEach((key, index) => {
+        if (
+          row[key] === null ||
+          row[key] === undefined ||
+          row[key] === ""
+        ) {
+          return;
         }
 
-        for (const key of numericFeatures) {
-            const value = row[key];
+        if (
+          !Array.isArray(model.categories[index]) ||
+          !model.categories[index].includes(
+            String(row[key])
+          )
+        ) {
+          errors.push(
+            "Giá trị chưa được huấn luyện: " + key
+          );
+        }
+      });
+    }
 
-            if (value === null || value === undefined ||
-                value === "") continue;
+    // Kiểm tra phạm vi dữ liệu huấn luyện
+    const ranges = trainingRanges[row.stage];
 
-            if (!Number.isFinite(Number(value)) ||
-                Number(value) < 0) {
-                errors.push("Giá trị không hợp lệ: " + key);
-            }
+    if (ranges) {
+      rangeKeys.forEach((key, index) => {
+        const raw = row[key];
+        const value = Number(raw);
+
+        if (
+          raw === null ||
+          raw === undefined ||
+          raw === "" ||
+          !Number.isFinite(value)
+        ) {
+          return;
         }
 
-        model.categorical.forEach((key, index) => {
-            if (row[key] === null ||
-                row[key] === undefined) return;
+        const [min, max] = ranges[index];
 
-            if (!model.categories[index].includes(String(row[key]))) {
-                errors.push("Danh mục chưa được huấn luyện: " + key);
-            }
-        });
+        if (value < min || value > max) {
+          warnings.push(
+            (labels[key] || key) +
+            " = " + value +
+            " (dữ liệu huấn luyện: " +
+            min + "–" + max + ")"
+          );
+        }
+      });
+    }
 
-        // Cảnh báo về tính tương thích dữ liệu.
-        // Đây KHÔNG phải phép kiểm tra phạm vi huấn luyện đầy đủ.
-        warnings.push(
-            "order_count đang được suy ra từ nghiệp vụ WMS; " +
-            "chưa xác minh tương đương dữ liệu huấn luyện."
+    return { errors, warnings };
+  }
+
+  function render() {
+    if (!target) return;
+
+    target.replaceChildren();
+
+    const model =
+      window.WmsRF && window.WmsRF.model;
+
+    const rows = window.WmsRFInputs;
+
+    if (!model) {
+      target.appendChild(
+        element(
+          "p",
+          "Đang tải mô hình Random Forest..."
+        )
+      );
+      return;
+    }
+
+    if (!Array.isArray(rows) || !rows.length) {
+      target.appendChild(
+        element(
+          "p",
+          "Chưa có dữ liệu đầu vào từ WMS."
+        )
+      );
+      return;
+    }
+
+    rows.forEach(row => {
+      const card = element("div", "");
+
+      card.style.cssText =
+        "border:1px solid #dbe4ef;" +
+        "border-radius:12px;" +
+        "padding:16px;" +
+        "margin-bottom:12px";
+
+      card.appendChild(
+        element(
+          "h3",
+          stageNames[row.stage] || row.stage
+        )
+      );
+
+      const { errors, warnings } =
+        validate(row, model);
+
+      if (errors.length) {
+        card.appendChild(
+          element(
+            "p",
+            "Chưa đủ dữ liệu hợp lệ để dự báo."
+          )
         );
 
-        warnings.push(
-            "Các biến pallet, thiết bị, ca và độ phức tạp " +
-            "là đầu vào kịch bản do người dùng thiết lập."
+        card.appendChild(
+          element(
+            "p",
+            errors.join("; "),
+            "card-note"
+          )
         );
 
-        if (Number(row.order_count) > 3) {
-            warnings.push(
-                "order_count lớn hơn 3, vượt mức đã quan sát " +
-                "trong dữ liệu SQL được kiểm tra trước đó."
-            );
-        }
-
-        return { errors, warnings };
-    }
-
-    function render() {
-        if (!target) return;
-
-        target.replaceChildren();
-
-        const model = window.WmsRF?.model;
-        const rows = window.WmsRFInputs;
-
-        if (!model) {
-            target.appendChild(makeElement(
-                "p",
-                "Đang tải mô hình Random Forest..."
-            ));
-            return;
-        }
-
-        if (!Array.isArray(rows) || rows.length === 0) {
-            target.appendChild(makeElement(
-                "p",
-                "Chưa có dữ liệu đầu vào từ WMS."
-            ));
-            return;
-        }
-
-        for (const row of rows) {
-            const card = makeElement("div", "");
-            card.style.border = "1px solid #dbe4ef";
-            card.style.borderRadius = "12px";
-            card.style.padding = "16px";
-            card.style.marginBottom = "12px";
-
-            card.appendChild(makeElement(
-                "h3",
-                stageNames[row.stage] || row.stage
-            ));
-
-            const { errors, warnings } = validate(row, model);
-
-            if (errors.length) {
-                card.appendChild(makeElement(
-                    "p",
-                    "Chưa đủ dữ liệu để dự báo."
-                ));
-
-                card.appendChild(makeElement(
-                    "p",
-                    errors.join("; "),
-                    "card-note"
-                ));
-            } else {
-                try {
-                    const minutes = window.WmsRF.predict(row);
-
-                    card.appendChild(makeElement(
-                        "h2",
-                        minutes.toFixed(2) + " phút"
-                    ));
-
-                    card.appendChild(makeElement(
-                        "p",
-                        "Dự báo thử nghiệm từ Random Forest Regression.",
-                        "card-note"
-                    ));
-
-                    const warning = makeElement(
-                        "p",
-                        "Lưu ý: " + warnings.join(" "),
-                        "card-note"
-                    );
-                    warning.style.color = "#a16207";
-                    card.appendChild(warning);
-
-                } catch (error) {
-                    card.appendChild(makeElement(
-                        "p",
-                        "Không thể dự báo: " + error.message
-                    ));
-                }
-            }
-
-            target.appendChild(card);
-        }
-    }
-
-    async function init() {
-        if (!target) return;
-
+      } else {
         try {
-            if (!window.WmsRF) {
-                throw new Error("Chưa nạp rf_browser.js");
-            }
+          const minutes =
+            window.WmsRF.predict(row);
 
-            if (!window.WmsRF.model) {
-                await window.WmsRF.load();
-            }
+          if (!Number.isFinite(minutes)) {
+            throw new Error(
+              "Kết quả không phải số hợp lệ"
+            );
+          }
 
-            render();
+          card.appendChild(
+            element(
+              "h2",
+              minutes.toFixed(2) + " phút"
+            )
+          );
+
+          // Cảnh báo dữ liệu ngoài phạm vi
+          if (warnings.length) {
+            const notice = element(
+              "p",
+              "CẢNH BÁO — Kịch bản nằm ngoài " +
+              "phạm vi huấn luyện ở " +
+              warnings.length + " biến: " +
+              warnings.join("; ") +
+              ". Dự báo chỉ để minh họa, " +
+              "chưa đủ cơ sở xác nhận độ chính xác.",
+              "card-note"
+            );
+
+            notice.style.cssText =
+              "color:#92400e;" +
+              "background:#fffbeb;" +
+              "border:1px solid #fcd34d;" +
+              "border-radius:8px;" +
+              "padding:10px";
+
+            card.appendChild(notice);
+
+          } else {
+            const ok = element(
+              "p",
+              "Đầu vào nằm trong khoảng min–max " +
+              "quan sát được của dữ liệu huấn luyện. " +
+              "Điều này không bảo đảm dự báo chính xác.",
+              "card-note"
+            );
+
+            ok.style.color = "#166534";
+
+            card.appendChild(ok);
+          }
+
+          // Thông tin nguồn dữ liệu
+          card.appendChild(
+            element(
+              "p",
+              "Lưu ý: order_count được suy ra " +
+              "từ phiếu/đơn nghiệp vụ WMS, " +
+              "chưa xác minh hoàn toàn tương đương " +
+              "dữ liệu SQL. Pallet, thiết bị, " +
+              "ca và độ phức tạp là cấu hình " +
+              "kịch bản do người dùng nhập.",
+              "card-note"
+            )
+          );
+
         } catch (error) {
-            target.textContent =
-                "Lỗi tải mô hình: " + error.message;
+          card.appendChild(
+            element(
+              "p",
+              "Không thể dự báo: " +
+              error.message
+            )
+          );
         }
+      }
+
+      target.appendChild(card);
+    });
+  }
+
+  async function init() {
+    if (!target) return;
+
+    try {
+      if (!window.WmsRF) {
+        throw new Error(
+          "Chưa nạp rf_browser.js"
+        );
+      }
+
+      if (!window.WmsRF.model) {
+        await window.WmsRF.load();
+      }
+
+      render();
+
+    } catch (error) {
+      target.textContent =
+        "Lỗi tải mô hình: " +
+        error.message;
     }
+  }
 
-    window.addEventListener("rf:inputs-updated", render);
-    window.addEventListener("rf:config-change", render);
+  window.addEventListener(
+    "rf:inputs-updated",
+    render
+  );
 
-    init();
+  window.addEventListener(
+    "rf:config-change",
+    render
+  );
+
+  init();
 })();
