@@ -183,6 +183,26 @@ function countSku(stage) {
         }
     }
 
+if (stage === "packing") {
+    const readyPickings = (state.pickings || [])
+        .filter(p =>
+            p.status === "COMPLETED" &&
+            !(state.packings || []).some(t =>
+                String(t.order_id) === String(p.order_id)
+            )
+        );
+
+    readyPickings.forEach(picking => {
+        const order = (state.orders || []).find(o =>
+            String(o.order_id) === String(picking.order_id)
+        );
+
+        if (order) {
+            addProduct(order.product_id);
+        }
+    });
+}
+
     return productIds.size > 0 ? productIds.size : null;
 }
 
@@ -194,26 +214,94 @@ const stageCollections = {
     shipping: "shipping_orders"
 };
 
+
 function countOrders(stage) {
-    const collection = stageCollections[stage];
-    const tasks = state[collection] || [];
+    const activeStatuses = ["PENDING", "IN_PROGRESS"];
 
-    const pendingTasks = tasks.filter(task =>
-        task.status === "PENDING"
-    );
+    const active = collection =>
+        (state[collection] || []).filter(task =>
+            activeStatuses.includes(task.status)
+        );
 
-    if (stage === "receiving" || stage === "putaway") {
-        // Đây là công việc nhập kho, không mặc định là đơn bán hàng.
-        return null;
+    if (stage === "receiving") {
+        return active("receipts").length;
     }
 
-    const orderIds = pendingTasks
-        .map(task => Number(task.order_id))
-        .filter(id => Number.isFinite(id) && id > 0);
+    if (stage === "putaway") {
+        const taskBatches = active("putaways")
+            .map(t => String(t.batch_id));
 
-    return new Set(orderIds).size;
+        const readyBatches = (state.batches || [])
+            .filter(b => Number(b.available_qty) > 0)
+            .map(b => String(b.batch_id));
+
+        return new Set([
+            ...taskBatches,
+            ...readyBatches
+        ]).size;
+    }
+
+    const orderIds = new Set();
+
+    const addOrder = id => {
+        if (id !== null && id !== undefined && id !== "") {
+            orderIds.add(String(id));
+        }
+    };
+
+    if (stage === "picking") {
+        active("pickings").forEach(t => addOrder(t.order_id));
+
+        (state.orders || []).forEach(order => {
+            const hasPicking = (state.pickings || []).some(p =>
+                String(p.order_id) === String(order.order_id)
+            );
+            if (!hasPicking) addOrder(order.order_id);
+        });
+    }
+
+    if (stage === "packing") {
+        active("packings").forEach(t => addOrder(t.order_id));
+
+        (state.pickings || [])
+            .filter(p => p.status === "COMPLETED")
+            .forEach(p => {
+                const hasPacking = (state.packings || []).some(t =>
+                    String(t.order_id) === String(p.order_id)
+                );
+                if (!hasPacking) addOrder(p.order_id);
+            });
+    }
+
+    if (stage === "shipping") {
+        active("shipping_orders").forEach(t =>
+            addOrder(t.order_id)
+        );
+
+        (state.packings || [])
+            .filter(p => p.status === "COMPLETED")
+            .forEach(p => {
+                const hasShipping = (state.shipping_orders || [])
+                    .some(t =>
+                        String(t.order_id) === String(p.order_id)
+                    );
+
+                if (!hasShipping) {
+                    const hasPackedPackage = (state.packages || [])
+                        .some(pkg =>
+                            String(pkg.packing_id) ===
+                                String(p.packing_id) &&
+                            pkg.status === "PACKED"
+                        );
+
+                    if (hasPackedPackage) addOrder(p.order_id);
+                }
+            });
+    }
+
+    return orderIds.size;
 }
-            const rows = stats.map(s => ({
+
                 stage: s.stage.toUpperCase(),
                 waiting_tasks: s.waiting + s.ready,
                 waiting_quantity: s.waitingQty,
