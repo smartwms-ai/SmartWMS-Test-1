@@ -101,6 +101,92 @@
         Đang chuẩn bị dự báo...
     </div>
 </section>
+    
+<section class="panel" id="rf-evaluation-panel">
+  <h2>Đánh giá chất lượng mô hình Random Forest</h2>
+
+  <p class="card-note">
+    Kết quả đánh giá offline từ lần huấn luyện thử nghiệm.
+    Không phải kết quả được tính lại từ dữ liệu mô phỏng
+    hiện tại trên website.
+  </p>
+
+  <div style="
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(170px,1fr));
+    gap:14px;
+    margin:18px 0;
+  ">
+    <div style="padding:18px;border:1px solid #dbe4ef;border-radius:12px">
+      <div style="color:#64748b">MAE</div>
+      <h2 style="margin:10px 0">2.68 phút</h2>
+      <small>Sai số tuyệt đối trung bình</small>
+    </div>
+
+    <div style="padding:18px;border:1px solid #dbe4ef;border-radius:12px">
+      <div style="color:#64748b">RMSE</div>
+      <h2 style="margin:10px 0">4.77 phút</h2>
+      <small>Căn bậc hai sai số bình phương trung bình</small>
+    </div>
+
+    <div style="padding:18px;border:1px solid #dbe4ef;border-radius:12px">
+      <div style="color:#64748b">R² Score</div>
+      <h2 style="margin:10px 0">0.978</h2>
+      <small>Độ phù hợp trên tập kiểm thử</small>
+    </div>
+  </div>
+
+  <h3>So sánh mô hình</h3>
+
+  <div class="table-wrap">
+    <table style="width:100%">
+      <thead>
+        <tr>
+          <th>Mô hình</th>
+          <th>MAE</th>
+          <th>RMSE</th>
+          <th>R²</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Baseline</td>
+          <td>23.50</td>
+          <td>32.55</td>
+          <td>-0.038</td>
+        </tr>
+        <tr>
+          <td><strong>Random Forest</strong></td>
+          <td><strong>2.68</strong></td>
+          <td><strong>4.77</strong></td>
+          <td><strong>0.978</strong></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Phương pháp đánh giá</h3>
+
+  <p class="card-note">
+    Tổng cộng 150 bản ghi, gồm 120 bản ghi huấn luyện
+    và 30 bản ghi kiểm thử. Mô hình được đánh giá bằng
+    MAE, RMSE và R².
+  </p>
+
+  <p style="
+    padding:12px;
+    border:1px solid #fcd34d;
+    background:#fffbeb;
+    border-radius:8px;
+    color:#92400e;
+  ">
+    Lưu ý: Đây là kết quả của lần huấn luyện thử nghiệm
+    trên bộ dữ liệu nhỏ. Chưa chứng minh khả năng tổng quát
+    trên dữ liệu kho thực tế hoặc các kịch bản nằm ngoài
+    phạm vi huấn luyện.
+  </p>
+</section>
+
     <div id="video-results"></div>
 
 </main>
