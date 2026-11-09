@@ -852,13 +852,89 @@ function renderOverview() {
         const [waiting, processing] =
             card.querySelectorAll(".process-data b");
 
-        waiting.textContent = pending + " phiếu";
+       
+        // Số phiếu đã tạo, đang chờ xử lý
+        waiting.textContent =
+            pending + " phiếu";
 
-        card.querySelector(".process-data").title =
-            metric.ready + " lô/đơn chưa tạo phiếu · " +
-            metric.workload + " thùng cần xử lý";
+        // Số phiếu đang thực hiện
+        processing.textContent =
+            active + " phiếu";
 
-        processing.textContent = active + " phiếu";
+        // Khối lượng công việc theo phân tích WMS
+        const waitingQty = Number(metric.waitingQty || 0);
+        const activeQty = Number(metric.activeQty || 0);
+        const readyCount = Number(metric.ready || 0);
+        const workload = Number(metric.workload || 0);
+        const capacity = Number(metric.capacity || 0);
+        const targetHours = Number(metric.targetHours || 2);
+        const loadPercent = Number(metric.loadPercent || 0);
+
+        const processData = card.querySelector(".process-data");
+
+        // Bổ sung chỉ số công việc chưa tạo phiếu
+        let extraInfo = processData.querySelector(
+            ".workload-detail"
+        );
+
+        if (!extraInfo) {
+            extraInfo = document.createElement("div");
+            extraInfo.className = "workload-detail";
+            extraInfo.style.cssText = `
+                margin-top: 12px;
+                padding-top: 10px;
+                border-top: 1px solid #dce6ef;
+                display: flex;
+                flex-direction: column;
+                gap: 5px;
+                font-size: 13px;
+                line-height: 1.5;
+                color: #47637d;
+            `;
+            processData.appendChild(extraInfo);
+        }
+
+        const makeLine = (label, value) => {
+            const line = document.createElement("span");
+            line.textContent = label + ": " + value;
+            return line;
+        };
+
+        extraInfo.replaceChildren(
+            makeLine(
+                "Chưa tạo phiếu",
+                formatter.format(readyCount) + " lô/đơn"
+            ),
+            makeLine(
+                "Khối lượng chờ",
+                formatter.format(waitingQty) + " thùng"
+            ),
+            makeLine(
+                "Đang xử lý",
+                formatter.format(activeQty) + " thùng"
+            ),
+            makeLine(
+                "Tổng công việc",
+                formatter.format(workload) + " thùng"
+            ),
+            makeLine(
+                "Năng lực trong " +
+                    formatter.format(targetHours) + " giờ",
+                formatter.format(capacity * targetHours) +
+                    " thùng"
+            ),
+            makeLine(
+                "Tỷ lệ tải",
+                formatter.format(loadPercent) + "%"
+            )
+        );
+
+        processData.title =
+            "Khối lượng chờ bao gồm phiếu chờ " +
+            "và công việc chưa tạo phiếu. " +
+            "Tỷ lệ tải = tổng công việc / " +
+            "năng lực trong thời gian mục tiêu.";
+
 
         card.querySelector(".progress-bar span").style.width =
             percent + "%";
