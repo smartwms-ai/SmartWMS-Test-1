@@ -128,10 +128,12 @@
 
     function renderRFInputs() {
         try {
-            if (!window.WmsDemo ||
-                typeof WmsDemo.analysis !== "function") {
-                throw new Error("Chưa tải được dữ liệu WMS.");
-            }
+           if (
+    typeof WmsDemo === "undefined" ||
+    typeof WmsDemo.analysis !== "function"
+) {
+    throw new Error("Chưa tải được dữ liệu WMS.");
+}
 
             const stats = WmsDemo.analysis();
 
