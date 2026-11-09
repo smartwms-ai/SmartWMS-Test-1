@@ -1925,35 +1925,87 @@ async function showShipmentForm(shippingId) {
     }
 }
 
+
 async function submitShipment(shippingId) {
-    const package_ids = [...document.querySelectorAll(".shipPackage:checked")]
-        .map(x=>Number(x.value));
-    const planned = document.getElementById("plannedDeparture").value;
+    const selected = [
+        ...document.querySelectorAll(".shipPackage:checked")
+    ];
 
-    const payload = {
-        action:"create_shipment",
-        shipping_order_id:shippingId,
-        carrier_name:document.getElementById("carrierName").value.trim(),
-        vehicle_number:document.getElementById("vehicleNumber").value.trim(),
-        driver_name:document.getElementById("driverName").value.trim(),
-        driver_phone:document.getElementById("driverPhone").value.trim(),
-        planned_departure:planned ? planned.replace("T"," ") + ":00" : "",
-        package_ids
-    };
+    const package_ids = selected.map(
+        x => Number(x.value)
+    );
 
-    if (!payload.carrier_name) {
+    // Không cho tạo chuyến xe rỗng
+    if (package_ids.length === 0) {
+        return toast("Vui lòng chọn ít nhất một kiện hàng.");
+    }
+
+    // Kiểm tra mã kiện không bị trùng
+    if (new Set(package_ids).size !== package_ids.length) {
+        return toast("Danh sách kiện hàng bị trùng.");
+    }
+
+    const carrierInput = document.getElementById("carrierName");
+    const carrier = carrierInput.value.trim();
+
+    if (!carrier) {
         return toast("Vui lòng nhập đơn vị vận chuyển.");
     }
 
+    const planned = document.getElementById(
+        "plannedDeparture"
+    ).value;
+
+    const payload = {
+        action: "create_shipment",
+        shipping_order_id: shippingId,
+        carrier_name: carrier,
+        vehicle_number: document.getElementById(
+            "vehicleNumber"
+        ).value.trim(),
+        driver_name: document.getElementById(
+            "driverName"
+        ).value.trim(),
+        driver_phone: document.getElementById(
+            "driverPhone"
+        ).value.trim(),
+        planned_departure: planned
+            ? planned.replace("T", " ") + ":00"
+            : "",
+        package_ids
+    };
+
+    // Ngăn nhấn liên tục khi đang lưu
+    const submitButton = document.querySelector(
+        'button[onclick^="submitShipment("]'
+    );
+
+    if (submitButton?.disabled) return;
+
+    if (submitButton) {
+        submitButton.disabled = true;
+        submitButton.textContent = "Đang tạo chuyến xe...";
+    }
+
     try {
-        const r = await postJson("shipping",payload);
+        const r = await postJson("shipping", payload);
+
         closeModal();
         toast(r.message);
         await loadData();
-    } catch(e) {
+
+    } catch (e) {
         toast(e.message);
+
+    } finally {
+        if (submitButton && submitButton.isConnected) {
+            submitButton.disabled = false;
+            submitButton.textContent =
+                "Xác nhận tạo chuyến xe";
+        }
     }
 }
+
 
 /* =========================
    BẮT ĐẦU / HOÀN TẤT
