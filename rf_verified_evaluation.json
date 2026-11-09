@@ -1,0 +1,269 @@
+{
+  "model_version": "RF_cycle_time_v2_demo",
+  "source": "wms___database (1)(3).sql",
+  "evaluation_method": "last 6 by recorded_time per stage; 30 held-out rows",
+  "train_rows_reported": 120,
+  "test_rows": 30,
+  "metrics": {
+    "MAE_min": 2.623349,
+    "RMSE_min": 4.75563,
+    "R2": 0.97758179
+  },
+  "feature_importance": [
+    {
+      "feature": "cat__stage_PACKING",
+      "importance": 0.002691928548039358
+    },
+    {
+      "feature": "cat__stage_PICKING",
+      "importance": 0.001881520378181409
+    },
+    {
+      "feature": "cat__stage_PUTAWAY",
+      "importance": 0.0138377412957302
+    },
+    {
+      "feature": "cat__stage_RECEIVING",
+      "importance": 0.26393464944026634
+    },
+    {
+      "feature": "cat__stage_SHIPPING",
+      "importance": 0.06474144426890384
+    },
+    {
+      "feature": "cat__shift_AFTERNOON",
+      "importance": 0.009042718466770237
+    },
+    {
+      "feature": "cat__shift_MORNING",
+      "importance": 0.0012452392887167612
+    },
+    {
+      "feature": "cat__shift_NIGHT",
+      "importance": 0.0011963641892990657
+    },
+    {
+      "feature": "cat__complexity_level_HIGH",
+      "importance": 0.032999398809968127
+    },
+    {
+      "feature": "cat__complexity_level_LOW",
+      "importance": 0.004686891015527363
+    },
+    {
+      "feature": "cat__complexity_level_MEDIUM",
+      "importance": 0.005879262701030554
+    },
+    {
+      "feature": "num__waiting_tasks",
+      "importance": 0.022858136805764064
+    },
+    {
+      "feature": "num__waiting_quantity",
+      "importance": 0.362011856558319
+    },
+    {
+      "feature": "num__sku_count",
+      "importance": 0.00891222785776257
+    },
+    {
+      "feature": "num__pallet_count",
+      "importance": 0.17381357445852919
+    },
+    {
+      "feature": "num__order_count",
+      "importance": 0.009418654803313721
+    },
+    {
+      "feature": "num__employee_count",
+      "importance": 0.005337401309633924
+    },
+    {
+      "feature": "num__active_equipment_count",
+      "importance": 0.015510989804244282
+    }
+  ],
+  "test_predictions": [
+    {
+      "workload_id": 120,
+      "stage": "PACKING",
+      "actual_minutes": 29.0,
+      "predicted_minutes": 31.31826551226552
+    },
+    {
+      "workload_id": 121,
+      "stage": "PACKING",
+      "actual_minutes": 37.0,
+      "predicted_minutes": 40.31450793650794
+    },
+    {
+      "workload_id": 122,
+      "stage": "PACKING",
+      "actual_minutes": 49.0,
+      "predicted_minutes": 48.24530423280424
+    },
+    {
+      "workload_id": 123,
+      "stage": "PACKING",
+      "actual_minutes": 22.0,
+      "predicted_minutes": 20.723011904761897
+    },
+    {
+      "workload_id": 124,
+      "stage": "PACKING",
+      "actual_minutes": 30.0,
+      "predicted_minutes": 31.740543290043306
+    },
+    {
+      "workload_id": 125,
+      "stage": "PACKING",
+      "actual_minutes": 46.0,
+      "predicted_minutes": 46.86670899470901
+    },
+    {
+      "workload_id": 95,
+      "stage": "PICKING",
+      "actual_minutes": 34.0,
+      "predicted_minutes": 35.405097522847534
+    },
+    {
+      "workload_id": 96,
+      "stage": "PICKING",
+      "actual_minutes": 48.0,
+      "predicted_minutes": 47.04813095238096
+    },
+    {
+      "workload_id": 97,
+      "stage": "PICKING",
+      "actual_minutes": 64.0,
+      "predicted_minutes": 61.00016402116402
+    },
+    {
+      "workload_id": 98,
+      "stage": "PICKING",
+      "actual_minutes": 27.0,
+      "predicted_minutes": 27.433351851851853
+    },
+    {
+      "workload_id": 99,
+      "stage": "PICKING",
+      "actual_minutes": 37.0,
+      "predicted_minutes": 37.84817821067824
+    },
+    {
+      "workload_id": 100,
+      "stage": "PICKING",
+      "actual_minutes": 60.0,
+      "predicted_minutes": 59.803596560846536
+    },
+    {
+      "workload_id": 70,
+      "stage": "PUTAWAY",
+      "actual_minutes": 42.0,
+      "predicted_minutes": 41.95268253968257
+    },
+    {
+      "workload_id": 71,
+      "stage": "PUTAWAY",
+      "actual_minutes": 57.0,
+      "predicted_minutes": 58.5126402116402
+    },
+    {
+      "workload_id": 72,
+      "stage": "PUTAWAY",
+      "actual_minutes": 74.0,
+      "predicted_minutes": 78.49816798941801
+    },
+    {
+      "workload_id": 73,
+      "stage": "PUTAWAY",
+      "actual_minutes": 34.0,
+      "predicted_minutes": 36.53914814814818
+    },
+    {
+      "workload_id": 74,
+      "stage": "PUTAWAY",
+      "actual_minutes": 44.0,
+      "predicted_minutes": 46.57831349206351
+    },
+    {
+      "workload_id": 75,
+      "stage": "PUTAWAY",
+      "actual_minutes": 68.0,
+      "predicted_minutes": 72.05779761904759
+    },
+    {
+      "workload_id": 45,
+      "stage": "RECEIVING",
+      "actual_minutes": 70.0,
+      "predicted_minutes": 72.59809259259256
+    },
+    {
+      "workload_id": 46,
+      "stage": "RECEIVING",
+      "actual_minutes": 90.0,
+      "predicted_minutes": 83.16464814814815
+    },
+    {
+      "workload_id": 47,
+      "stage": "RECEIVING",
+      "actual_minutes": 135.0,
+      "predicted_minutes": 127.89297486772487
+    },
+    {
+      "workload_id": 48,
+      "stage": "RECEIVING",
+      "actual_minutes": 62.0,
+      "predicted_minutes": 60.31018253968252
+    },
+    {
+      "workload_id": 49,
+      "stage": "RECEIVING",
+      "actual_minutes": 80.0,
+      "predicted_minutes": 75.7226878306878
+    },
+    {
+      "workload_id": 50,
+      "stage": "RECEIVING",
+      "actual_minutes": 140.0,
+      "predicted_minutes": 118.44920105820104
+    },
+    {
+      "workload_id": 145,
+      "stage": "SHIPPING",
+      "actual_minutes": 12.0,
+      "predicted_minutes": 13.163392857142858
+    },
+    {
+      "workload_id": 146,
+      "stage": "SHIPPING",
+      "actual_minutes": 15.0,
+      "predicted_minutes": 14.856861111111112
+    },
+    {
+      "workload_id": 147,
+      "stage": "SHIPPING",
+      "actual_minutes": 20.0,
+      "predicted_minutes": 19.86753968253969
+    },
+    {
+      "workload_id": 148,
+      "stage": "SHIPPING",
+      "actual_minutes": 10.0,
+      "predicted_minutes": 10.395901875901878
+    },
+    {
+      "workload_id": 149,
+      "stage": "SHIPPING",
+      "actual_minutes": 13.0,
+      "predicted_minutes": 13.199805555555557
+    },
+    {
+      "workload_id": 150,
+      "stage": "SHIPPING",
+      "actual_minutes": 18.0,
+      "predicted_minutes": 18.267539682539685
+    }
+  ],
+  "limitations": "Metrics from saved .pkl on selected 30 test records; cannot independently prove no test leakage or exact training provenance from model alone."
+}
