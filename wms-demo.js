@@ -675,14 +675,19 @@ const WmsDemo = (() => {
                 );
             }
 
-            if (
-                shipment.delivery_status === "DELIVERED" &&
-                data.delivery_status !== "DELIVERED"
-            ) {
-                throw new Error(
-                    "Chuyến đã giao thành công."
-                );
-            }
+           
+if (shipment.delivery_status === "DELIVERED") {
+    throw new Error(
+        "Chuyến đã giao thành công, không thể cập nhật lại."
+    );
+}
+
+if (shipment.delivery_status === "FAILED") {
+    throw new Error(
+        "Chuyến giao thất bại cần được xử lý riêng."
+    );
+}
+
 
             shipment.delivery_status =
                 data.delivery_status;
