@@ -94,7 +94,11 @@
     }
 
     // Kiểm tra công đoạn
-    if (!trainingRanges[row.stage]) {
+    if (!
+if (!Object.prototype.hasOwnProperty.call(stageNames, row.stage)) {
+  errors.push("Công đoạn không hợp lệ");
+}
+) {
       errors.push("Công đoạn không hợp lệ");
     }
 
