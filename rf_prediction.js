@@ -93,14 +93,12 @@
       }
     }
 
+   
     // Kiểm tra công đoạn
-    if (!
-if (!Object.prototype.hasOwnProperty.call(stageNames, row.stage)) {
-  errors.push("Công đoạn không hợp lệ");
-}
-) {
+    if (!Object.prototype.hasOwnProperty.call(stageNames, row.stage)) {
       errors.push("Công đoạn không hợp lệ");
     }
+
 
     // Kiểm tra biến phân loại
     if (
