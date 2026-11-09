@@ -165,6 +165,68 @@
     </table>
   </div>
 
+<h3>Feature Importance — Các yếu tố ảnh hưởng đến AI</h3>
+<p class="card-note">
+  Mức độ quan trọng được trích từ mô hình Random Forest
+  đã huấn luyện. Đây là độ quan trọng của từng đặc trưng,
+  không chứng minh quan hệ nguyên nhân - kết quả.
+</p>
+
+<div id="rf-feature-importance" style="margin:20px 0"></div>
+
+<script>
+(function () {
+  const features = [
+    ["Số lượng hàng chờ", 36.201],
+    ["Công đoạn Nhận hàng", 26.393],
+    ["Số pallet", 17.381],
+    ["Công đoạn Xuất hàng", 6.474],
+    ["Độ phức tạp HIGH", 3.300],
+    ["Số công việc chờ", 2.286],
+    ["Thiết bị hoạt động", 1.551]
+  ];
+
+  const target = document.getElementById(
+    "rf-feature-importance"
+  );
+
+  if (!target) return;
+
+  features.forEach(([name, percent]) => {
+    const wrapper = document.createElement("div");
+    wrapper.style.marginBottom = "14px";
+
+    const label = document.createElement("div");
+    label.style.cssText =
+      "display:flex;justify-content:space-between;" +
+      "gap:12px;margin-bottom:6px";
+
+    const title = document.createElement("span");
+    title.textContent = name;
+
+    const value = document.createElement("strong");
+    value.textContent = percent.toFixed(2) + "%";
+
+    label.append(title, value);
+
+    const track = document.createElement("div");
+    track.style.cssText =
+      "height:12px;background:#e8eef6;" +
+      "border-radius:8px;overflow:hidden";
+
+    const bar = document.createElement("div");
+    bar.style.cssText =
+      "height:100%;background:#2563eb;" +
+      "border-radius:8px";
+    bar.style.width = percent + "%";
+
+    track.appendChild(bar);
+    wrapper.append(label, track);
+    target.appendChild(wrapper);
+  });
+})();
+</script>
+
   <h3>Phương pháp đánh giá</h3>
 
   <p class="card-note">
