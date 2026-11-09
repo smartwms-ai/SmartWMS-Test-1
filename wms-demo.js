@@ -656,6 +656,100 @@ const WmsDemo = (() => {
             rows.push(row);
 
         } else if (
+            action === "retry_delivery" &&
+            stage === "shipping"
+        ) {
+            const oldShipment = find(
+                state.shipments,
+                "shipment_id",
+                data.shipment_id
+            );
+
+            if (oldShipment.delivery_status !== "FAILED") {
+                throw new Error(
+                    "Chỉ được giao lại chuyến đã thất bại."
+                );
+            }
+
+            const existingRetry = state.shipments.some(
+                s => Number(s.retry_of_shipment_id) ===
+                    Number(oldShipment.shipment_id)
+            );
+
+            if (existingRetry) {
+                throw new Error(
+                    "Chuyến này đã được tạo chuyến giao lại."
+                );
+            }
+
+            const packageIds = [
+                ...new Set(
+                    (oldShipment.package_ids || []).map(Number)
+                )
+            ];
+
+            if (!packageIds.length) {
+                throw new Error(
+                    "Chuyến cũ không có kiện hàng hợp lệ."
+                );
+            }
+
+            for (const packageId of packageIds) {
+                const pkg = find(
+                    state.packages,
+                    "packaging_unit_id",
+                    packageId
+                );
+
+                if (pkg.status !== "SHIPPED") {
+                    throw new Error(
+                        "Trạng thái kiện không phù hợp để giao lại."
+                    );
+                }
+            }
+
+            const carrier = String(
+                data.carrier_name || oldShipment.carrier_name || ""
+            ).trim();
+
+            if (!carrier) {
+                throw new Error(
+                    "Thiếu đơn vị vận chuyển."
+                );
+            }
+
+            const retryId = nextId();
+
+            state.shipments.push({
+                shipment_id: retryId,
+                shipment_code: "TRIP-" + retryId,
+                shipping_order_id: oldShipment.shipping_order_id,
+                shipping_code: oldShipment.shipping_code,
+                order_id: oldShipment.order_id,
+                order_code: oldShipment.order_code,
+                package_ids: packageIds,
+                carrier_name: carrier,
+                vehicle_number: String(
+                    data.vehicle_number || ""
+                ).trim(),
+                driver_name: String(
+                    data.driver_name || ""
+                ).trim(),
+                driver_phone: String(
+                    data.driver_phone || ""
+                ).trim(),
+                planned_departure:
+                    data.planned_departure || "",
+                delivery_status: "PENDING",
+                retry_of_shipment_id: oldShipment.shipment_id,
+                created_at: new Date().toISOString()
+            });
+
+            // Không cập nhật trạng thái kiện, tồn kho
+            // hoặc số lượng đã xuất lần thứ hai.
+            
+
+        } else if (
             action === "update_delivery" &&
             stage === "shipping"
         ) {
