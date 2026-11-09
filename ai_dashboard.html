@@ -136,7 +136,35 @@
 }
 
             const stats = WmsDemo.analysis();
+const state = JSON.parse(WmsDemo.exportData());
 
+const stageCollections = {
+    receiving: "receipts",
+    putaway: "putaways",
+    picking: "pickings",
+    packing: "packings",
+    shipping: "shipping_orders"
+};
+
+function countOrders(stage) {
+    const collection = stageCollections[stage];
+    const tasks = state[collection] || [];
+
+    const pendingTasks = tasks.filter(task =>
+        task.status === "PENDING"
+    );
+
+    if (stage === "receiving" || stage === "putaway") {
+        // Đây là công việc nhập kho, không mặc định là đơn bán hàng.
+        return null;
+    }
+
+    const orderIds = pendingTasks
+        .map(task => Number(task.order_id))
+        .filter(id => Number.isFinite(id) && id > 0);
+
+    return new Set(orderIds).size;
+}
             const rows = stats.map(s => ({
                 stage: s.stage.toUpperCase(),
                 waiting_tasks: s.waiting + s.ready,
@@ -146,7 +174,7 @@
                 // Các biến chưa được xác minh trong WMS
                 sku_count: null,
                 pallet_count: null,
-                order_count: null,
+order_count: countOrders(s.stage),                
                 active_equipment_count: null,
                 shift: null,
                 complexity_level: null
