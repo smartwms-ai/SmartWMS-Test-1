@@ -2050,59 +2050,182 @@ const WmsDemo = (() => {
         };
     }
 
+  
     function inventory() {
         const state = read();
-
         const stock = new Map();
 
+        // Khởi tạo thống kê theo từng sản phẩm
         for (const product of products) {
-            stock.set(
-                product.product_id,
-                {
-                    ...product,
-                    quantity: 0,
-                    locations: []
-                }
-            );
+            stock.set(Number(product.product_id), {
+                ...product,
+                received: 0,
+                rejected: 0,
+                toStore: 0,
+                free: 0,
+                reserved: 0,
+                toPack: 0,
+                toShip: 0,
+                shipped: 0,
+                quantity: 0,
+                locations: [],
+                difference: 0
+            });
         }
 
+        const getProduct = id =>
+            stock.get(Number(id));
+
+        // 1. NHẬN HÀNG: Thực nhận và QC loại
+        for (const receipt of state.receipts) {
+            if (receipt.status !== "COMPLETED") {
+                continue;
+            }
+
+            for (const item of receipt.items || []) {
+                const p = getProduct(item.product_id);
+                if (!p) continue;
+
+                p.received += num(item.received_qty);
+                p.rejected += num(item.rejected_qty);
+            }
+        }
+
+        // 2. CẤT HÀNG: Lô đã đạt QC nhưng chưa cất
+        for (const batch of state.batches) {
+            const p = getProduct(batch.product_id);
+            if (!p) continue;
+
+            p.toStore += num(batch.available_qty);
+        }
+
+        // Hàng đã tạo phiếu cất nhưng chưa hoàn thành
         for (const task of state.putaways) {
-            if (
-                task.status !== "COMPLETED" ||
-                num(task.stock_qty) <= 0
-            ) {
+            if (task.status === "COMPLETED") {
                 continue;
             }
 
             const batch = state.batches.find(
-                b =>
-                    Number(b.batch_id) ===
-                    Number(task.batch_id)
+                b => Number(b.batch_id) ===
+                     Number(task.batch_id)
             );
 
             if (!batch) continue;
 
-            const product = stock.get(
-                Number(batch.product_id)
+            const p = getProduct(batch.product_id);
+            if (!p) continue;
+
+            p.toStore += num(task.quantity);
+        }
+
+        // 3. TỒN KHẢ DỤNG: Hàng còn ở vị trí lưu trữ
+        for (const task of state.putaways) {
+            if (task.status !== "COMPLETED") {
+                continue;
+            }
+
+            const batch = state.batches.find(
+                b => Number(b.batch_id) ===
+                     Number(task.batch_id)
             );
 
-            if (!product) continue;
+            if (!batch) continue;
 
-            product.quantity +=
-                num(task.stock_qty);
+            const p = getProduct(batch.product_id);
+            if (!p) continue;
 
-            product.locations.push({
-                location_code:
-                    task.destination_location,
-                batch_code:
-                    task.batch_code,
-                quantity:
-                    num(task.stock_qty)
-            });
+            const qty = num(task.stock_qty);
+
+            p.free += qty;
+
+            if (qty > 0) {
+                p.locations.push({
+                    location_code:
+                        task.destination_location,
+                    batch_code: task.batch_code,
+                    quantity: qty
+                });
+            }
+        }
+
+        // 4. PICKING: Hàng đã giữ và hàng đã lấy
+        for (const task of state.pickings) {
+            for (const item of task.items || []) {
+                const p = getProduct(item.product_id);
+                if (!p) continue;
+
+                if (
+                    task.status === "PENDING" ||
+                    task.status === "IN_PROGRESS"
+                ) {
+                    p.reserved += num(
+                        item.requested_qty
+                    );
+                }
+
+                if (task.status === "COMPLETED") {
+                    p.toPack += num(
+                        item.picked_qty
+                    );
+                }
+            }
+        }
+
+        // 5. PACKING: Chuyển hàng đã đóng
+        // từ chờ đóng sang chờ xuất
+        for (const pkg of state.packages) {
+            for (const item of pkg.items || []) {
+                const p = getProduct(item.product_id);
+                if (!p) continue;
+
+                const qty = num(item.packed_qty);
+
+                if (
+                    pkg.status === "PACKED" ||
+                    pkg.status === "SHIPPED"
+                ) {
+                    p.toPack -= qty;
+                }
+
+                if (pkg.status === "PACKED") {
+                    p.toShip += qty;
+                }
+
+                if (pkg.status === "SHIPPED") {
+                    p.shipped += qty;
+                }
+            }
+        }
+
+        // 6. KIỂM TRA BẢO TOÀN SỐ LƯỢNG
+        for (const p of stock.values()) {
+            p.quantity = p.free;
+
+            const accounted =
+                p.rejected +
+                p.toStore +
+                p.free +
+                p.reserved +
+                p.toPack +
+                p.toShip +
+                p.shipped;
+
+            p.difference =
+                p.received - accounted;
+
+            if (Math.abs(p.difference) > 0.000001) {
+                console.warn(
+                    "SmartWMS: Lệch dòng hàng",
+                    p.sku,
+                    "Chênh lệch:",
+                    p.difference
+                );
+            }
         }
 
         return [...stock.values()];
     }
+
 
     async function setCapacity(
         stage,
