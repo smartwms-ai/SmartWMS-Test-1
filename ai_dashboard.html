@@ -305,20 +305,48 @@ function countOrders(stage) {
   return orderIds.size;
 }
 
-const rows = stats.map(s => ({
-    stage: s.stage.toUpperCase(),
-                waiting_tasks: s.waiting + s.ready,
-                waiting_quantity: s.waitingQty,
-                employee_count: s.workers,
+const rows = stats.map(s => {
+    const stage = String(s.stage).toLowerCase();
 
-                // Các biến chưa được xác minh trong WMS
-               sku_count: countSku(s.stage),
-                pallet_count: null,
-order_count: countOrders(s.stage),                
-                active_equipment_count: null,
-                shift: null,
-                complexity_level: null
-            }));
+    // Đọc cấu hình kịch bản do người dùng đã lưu
+    const config = (
+        typeof RFConfig !== "undefined" &&
+        typeof RFConfig.get === "function"
+    ) ? RFConfig.get(stage) : {};
+
+    // Chỉ nhận số nguyên không âm đã được nhập
+    function validNumber(value) {
+        if (value === null ||
+            value === undefined ||
+            value === "") {
+            return null;
+        }
+
+        const number = Number(value);
+
+        return Number.isSafeInteger(number) && number >= 0
+            ? number
+            : null;
+    }
+
+    return {
+        stage: String(s.stage).toUpperCase(),
+        waiting_tasks: s.waiting + s.ready,
+        waiting_quantity: s.waitingQty,
+        employee_count: s.workers,
+        sku_count: countSku(stage),
+        order_count: countOrders(stage),
+
+        // Dữ liệu cấu hình vận hành AI
+        pallet_count: validNumber(config.pallet_count),
+        active_equipment_count:
+            validNumber(config.active_equipment_count),
+        shift: config.shift || null,
+        complexity_level: config.complexity_level || null
+    };
+});
+
+
 
             const table = document.createElement("table");
             table.style.width = "100%";
@@ -394,7 +422,7 @@ order_count: countOrders(s.stage),
 
     // Cập nhật bảng khi dữ liệu WMS thay đổi
     window.addEventListener("wms:change", renderRFInputs);
-
+    window.addEventListener("rf:config-change", renderRFInputs);
     window.addEventListener("pageshow", renderRFInputs);
 
     window.addEventListener("storage", function (event) {
