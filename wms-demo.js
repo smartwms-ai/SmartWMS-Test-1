@@ -1812,23 +1812,33 @@ const WmsDemo = (() => {
                         );
                 }
 
-                if (
-                    stage === "shipping"
-                ) {
-                    ready =
-                        state.packings.filter(
-                            p =>
-                                p.status === "COMPLETED" &&
-                                !state.shipping_orders.some(
-                                    s =>
-                                        Number(s.order_id) ===
-                                        Number(p.order_id)
+             
+                if (stage === "shipping") {
+                    ready = state.packings
+                        .filter(p =>
+                            p.status === "COMPLETED" &&
+                            !state.shipping_orders.some(s =>
+                                Number(s.order_id) ===
+                                Number(p.order_id)
+                            )
+                        )
+                        .map(p =>
+                            state.packages
+                                .filter(pkg =>
+                                    Number(pkg.packing_id) ===
+                                        Number(p.packing_id) &&
+                                    pkg.status === "PACKED"
                                 )
-                        ).map(
-                            p =>
-                                num(p.packed_qty)
-                        );
+                                .flatMap(pkg => pkg.items || [])
+                                .reduce(
+                                    (sum, item) =>
+                                        sum + num(item.packed_qty),
+                                    0
+                                )
+                        )
+                        .filter(qty => qty > 0);
                 }
+
 
                 const remaining = row =>
                     stage === "shipping"
