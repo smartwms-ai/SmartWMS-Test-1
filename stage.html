@@ -1863,12 +1863,12 @@ async function showShipmentForm(shippingId) {
             String(x.status).toUpperCase()==="COMPLETED"
         );
         const packingIds = packingTasks.map(x=>Number(x.packing_id));
-        const alreadyShipped = (db.packages || []).map(
-            x=>Number(x.packaging_unit_id)
-        );
+        
+        // Chỉ hiển thị kiện đã đóng gói, chưa xuất hàng
         const packages = (packingData.packages || []).filter(
-            x=>packingIds.includes(Number(x.packing_id)) &&
-            !alreadyShipped.includes(Number(x.packaging_unit_id))
+            p =>
+                packingIds.includes(Number(p.packing_id)) &&
+                String(p.status).toUpperCase() === "PACKED"
         );
 
         openModal("Tạo chuyến xe và bàn giao kiện hàng", `
