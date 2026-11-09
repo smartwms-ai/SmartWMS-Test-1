@@ -537,7 +537,7 @@
                     <span style="width:0%"></span>
                 </div>
                 <div class="progress-label">
-                    <span>Tiến độ</span>
+                    <span>Tiến độ đầu việc</span>
                     <b>—</b>
                 </div>
             </a>
@@ -557,7 +557,7 @@
                     <span style="width:0%"></span>
                 </div>
                 <div class="progress-label">
-                    <span>Tiến độ</span>
+                    <span>Tiến độ đầu việc</span>
                     <b>—</b>
                 </div>
             </a>
@@ -577,7 +577,7 @@
                     <span style="width:0%"></span>
                 </div>
                 <div class="progress-label">
-                    <span>Tiến độ</span>
+                    <span>Tiến độ đầu việc</span>
                     <b>—</b>
                 </div>
             </a>
@@ -597,7 +597,7 @@
                     <span style="width:0%"></span>
                 </div>
                 <div class="progress-label">
-                    <span>Tiến độ</span>
+                    <span>Tiến độ đầu việc</span>
                     <b>—</b>
                 </div>
             </a>
@@ -617,7 +617,7 @@
                     <span style="width:0%"></span>
                 </div>
                 <div class="progress-label">
-                    <span>Tiến độ</span>
+                    <span>Tiến độ đầu việc</span>
                     <b>—</b>
                 </div>
             </a>
@@ -831,9 +831,20 @@ function renderOverview() {
 
         const completed = rows.length - pending - active;
 
-        const percent = rows.length
-            ? Math.round(100 * completed / rows.length)
+       
+        // Tổng số đầu việc gồm cả công việc chưa tạo phiếu
+        const readyCount = Number(metric.ready || 0);
+
+        const totalWorkItems =
+            rows.length + readyCount;
+
+        // Tiến độ hoàn thành theo số đầu việc
+        const percent = totalWorkItems > 0
+            ? Math.round(
+                100 * completed / totalWorkItems
+            )
             : 0;
+
 
         const status = card.querySelector(".status");
 
@@ -864,7 +875,6 @@ function renderOverview() {
         // Khối lượng công việc theo phân tích WMS
         const waitingQty = Number(metric.waitingQty || 0);
         const activeQty = Number(metric.activeQty || 0);
-        const readyCount = Number(metric.ready || 0);
         const workload = Number(metric.workload || 0);
         const capacity = Number(metric.capacity || 0);
         const targetHours = Number(metric.targetHours || 2);
