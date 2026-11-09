@@ -227,6 +227,190 @@
 })();
 </script>
 
+<section id="rf-actual-predicted" style="margin:24px 0">
+  <h3>Actual vs Predicted — Thực tế và dự báo</h3>
+  <p class="card-note">
+    So sánh 30 bản ghi kiểm thử từ dữ liệu SQL với
+    kết quả dự báo của Random Forest đã huấn luyện.
+    Đây là đánh giá offline, không phải dữ liệu
+    vận hành trực tiếp trên website.
+  </p>
+
+  <label for="rf-test-stage">
+    <strong>Chọn công đoạn:</strong>
+  </label>
+  <select id="rf-test-stage" style="
+    margin:10px 0 18px;
+    padding:10px;
+    border:1px solid #dbe4ef;
+    border-radius:8px;
+    min-width:180px;
+  ">
+    <option value="RECEIVING">Nhận hàng</option>
+    <option value="PUTAWAY">Cất hàng</option>
+    <option value="PICKING">Lấy hàng</option>
+    <option value="PACKING">Đóng gói</option>
+    <option value="SHIPPING">Xuất hàng</option>
+  </select>
+
+  <div style="display:flex;gap:18px;margin-bottom:14px">
+    <span>🔵 Thực tế</span>
+    <span>🟠 AI dự báo</span>
+  </div>
+
+  <div id="rf-test-chart"></div>
+  <div id="rf-test-summary" class="card-note"></div>
+</section>
+
+<script>
+(function () {
+  "use strict";
+
+  // Mỗi dòng: [công đoạn, thực tế, dự báo]
+  // 30 bản ghi thuộc tập kiểm thử của mô hình RF.
+  const data = [
+    ["PACKING",29,31.32],
+    ["PACKING",37,40.31],
+    ["PACKING",49,48.25],
+    ["PACKING",22,20.72],
+    ["PACKING",30,31.74],
+    ["PACKING",46,46.87],
+
+    ["PICKING",26,24.00],
+    ["PICKING",34,35.41],
+    ["PICKING",48,47.05],
+    ["PICKING",64,61.00],
+    ["PICKING",27,27.43],
+    ["PICKING",37,37.85],
+
+    ["PUTAWAY",42,41.95],
+    ["PUTAWAY",57,58.51],
+    ["PUTAWAY",74,78.50],
+    ["PUTAWAY",34,36.54],
+    ["PUTAWAY",44,46.58],
+    ["PUTAWAY",68,72.06],
+
+    ["RECEIVING",70,72.60],
+    ["RECEIVING",90,83.16],
+    ["RECEIVING",135,127.89],
+    ["RECEIVING",62,60.31],
+    ["RECEIVING",80,75.72],
+    ["RECEIVING",140,118.45],
+
+    ["SHIPPING",12,13.16],
+    ["SHIPPING",15,14.86],
+    ["SHIPPING",20,19.87],
+    ["SHIPPING",10,10.40],
+    ["SHIPPING",13,13.20],
+    ["SHIPPING",18,18.27]
+  ];
+
+  const select = document.getElementById("rf-test-stage");
+  const chart = document.getElementById("rf-test-chart");
+  const summary = document.getElementById("rf-test-summary");
+
+  if (!select || !chart || !summary) return;
+
+  function make(tag, content) {
+    const node = document.createElement(tag);
+    if (content !== undefined) {
+      node.textContent = String(content);
+    }
+    return node;
+  }
+
+  function drawBar(value, max, color) {
+    const track = make("div");
+    track.style.cssText =
+      "height:12px;background:#e8eef6;" +
+      "border-radius:8px;overflow:hidden;" +
+      "flex:1;min-width:0";
+
+    const bar = make("div");
+    bar.style.cssText =
+      "height:100%;border-radius:8px;" +
+      "background:" + color + ";" +
+      "width:" + (value / max * 100) + "%";
+
+    track.appendChild(bar);
+    return track;
+  }
+
+  function render() {
+    const rows = data.filter(
+      item => item[0] === select.value
+    );
+
+    chart.replaceChildren();
+
+    const max = Math.max(
+      ...rows.flatMap(item => [item[1], item[2]])
+    ) * 1.08;
+
+    rows.forEach((item, index) => {
+      const actual = item[1];
+      const predicted = item[2];
+
+      const group = make("div");
+      group.style.cssText =
+        "margin-bottom:16px;padding:12px;" +
+        "border:1px solid #e2e8f0;" +
+        "border-radius:10px";
+
+      const title = make(
+        "strong",
+        "Bản ghi kiểm thử " + (index + 1)
+      );
+      group.appendChild(title);
+
+      [
+        ["Thực tế", actual, "#2563eb"],
+        ["Dự báo", predicted, "#f59e0b"]
+      ].forEach(([label, value, color]) => {
+        const line = make("div");
+        line.style.cssText =
+          "display:flex;align-items:center;" +
+          "gap:10px;margin-top:10px";
+
+        const name = make("span", label);
+        name.style.width = "65px";
+
+        const number = make(
+          "strong",
+          value.toFixed(2) + " phút"
+        );
+        number.style.cssText =
+          "min-width:95px;text-align:right";
+
+        line.append(
+          name,
+          drawBar(value, max, color),
+          number
+        );
+
+        group.appendChild(line);
+      });
+
+      chart.appendChild(group);
+    });
+
+    const mae = rows.reduce(
+      (sum, row) => sum + Math.abs(row[1] - row[2]),
+      0
+    ) / rows.length;
+
+    summary.textContent =
+      "Số bản ghi: " + rows.length +
+      " | MAE riêng công đoạn: " +
+      mae.toFixed(2) + " phút." +
+      " Các giá trị dự báo được làm tròn 2 chữ số.";
+  }
+
+  select.addEventListener("change", render);
+  render();
+})();
+</script>
+
   <h3>Phương pháp đánh giá</h3>
 
   <p class="card-note">
