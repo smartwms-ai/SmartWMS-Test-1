@@ -2190,16 +2190,30 @@ async function viewDetails(id) {
                                 <td>${esc(s.carrier_name)}</td>
                                 <td>${esc(s.vehicle_number)}</td>
                                 <td>${statusBadge(s.delivery_status)}</td>
-                                <td>
-                                    <button class="btn btn-light"
-                                        onclick="updateShipmentStatus(${Number(s.shipment_id)},'DELIVERED')">
-                                        Đã giao
-                                    </button>
-                                    <button class="btn btn-danger"
-                                        onclick="updateShipmentStatus(${Number(s.shipment_id)},'FAILED')">
-                                        Giao thất bại
-                                    </button>
-                                </td>
+                                
+<td>
+    ${
+        s.delivery_status === "DELIVERED"
+        ? `<span style="color:#16845b;font-weight:600">
+               Đã hoàn tất giao hàng
+           </span>`
+        : s.delivery_status === "FAILED"
+        ? `<span style="color:#b45309;font-weight:600">
+               Giao thất bại – cần xử lý
+           </span>`
+        : `
+            <button class="btn btn-light"
+                onclick="updateShipmentStatus(${Number(s.shipment_id)},'DELIVERED')">
+                Đã giao
+            </button>
+            <button class="btn btn-danger"
+                onclick="updateShipmentStatus(${Number(s.shipment_id)},'FAILED')">
+                Giao thất bại
+            </button>
+          `
+    }
+</td>
+
                             </tr>
                         `).join("")}
                     </tbody>
