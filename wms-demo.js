@@ -854,14 +854,15 @@ if (shipment.delivery_status === "FAILED") {
                                 );
                             }
 
-                            if (
-                                input.qc_result === "FAIL" &&
-                                accepted_qty > 0
-                            ) {
-                                throw new Error(
-                                    "Hàng QC không đạt không thể nhập tồn."
-                                );
-                            }
+                          if (
+    input.qc_result === "FAIL" &&
+    accepted_qty > 0 &&
+    rejected_qty === 0
+) {
+    throw new Error(
+        "QC không đạt nhưng toàn bộ số lượng lại được ghi nhận đạt."
+    );
+}
 
                             return {
                                 item,
