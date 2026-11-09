@@ -37,41 +37,7 @@
     active_equipment_count: "Thiết bị hoạt động"
   };
 
-  // Khoảng min-max theo từng công đoạn
-  // Từ dữ liệu SQL huấn luyện Random Forest
-  const trainingRanges = {
-    RECEIVING: [
-      [1, 5], [100, 520], [2, 6],
-      [0, 10], [0, 3], [1, 3], [1, 3]
-    ],
-    PUTAWAY: [
-      [1, 5], [90, 500], [2, 6],
-      [0, 9], [0, 3], [1, 3], [1, 2]
-    ],
-    PICKING: [
-      [1, 4], [45, 360], [2, 7],
-      [0, 5], [1, 4], [1, 3], [1, 2]
-    ],
-    PACKING: [
-      [1, 4], [35, 390], [2, 7],
-      [0, 3], [1, 4], [1, 3], [1, 1]
-    ],
-    SHIPPING: [
-      [1, 4], [35, 425], [2, 7],
-      [0, 3], [1, 4], [1, 2], [1, 1]
-    ]
-  };
-
-  const rangeKeys = [
-    "waiting_tasks",
-    "waiting_quantity",
-    "sku_count",
-    "pallet_count",
-    "order_count",
-    "employee_count",
-    "active_equipment_count"
-  ];
-
+  
   const target = document.getElementById(
     "rf-prediction-results"
   );
@@ -159,36 +125,7 @@
       });
     }
 
-    // Kiểm tra phạm vi dữ liệu huấn luyện
-    const ranges = trainingRanges[row.stage];
-
-    if (ranges) {
-      rangeKeys.forEach((key, index) => {
-        const raw = row[key];
-        const value = Number(raw);
-
-        if (
-          raw === null ||
-          raw === undefined ||
-          raw === "" ||
-          !Number.isFinite(value)
-        ) {
-          return;
-        }
-
-        const [min, max] = ranges[index];
-
-        if (value < min || value > max) {
-          warnings.push(
-            (labels[key] || key) +
-            " = " + value +
-            " (dữ liệu huấn luyện: " +
-            min + "–" + max + ")"
-          );
-        }
-      });
-    }
-
+    
     return { errors, warnings };
   }
 
@@ -276,40 +213,17 @@
           );
 
           // Cảnh báo dữ liệu ngoài phạm vi
-          if (warnings.length) {
-            const notice = element(
-              "p",
-              "CẢNH BÁO — Kịch bản nằm ngoài " +
-              "phạm vi huấn luyện ở " +
-              warnings.length + " biến: " +
-              warnings.join("; ") +
-              ". Dự báo chỉ để minh họa, " +
-              "chưa đủ cơ sở xác nhận độ chính xác.",
-              "card-note"
-            );
+          const note = element(
+  "p",
+  "Dự báo từ mô hình Random Forest v2. " +
+  "Đầu vào đã qua kiểm tra định dạng và danh mục, " +
+  "nhưng chưa xác minh phạm vi phân phối dữ liệu huấn luyện. " +
+  "Kết quả chỉ phục vụ mô phỏng.",
+  "card-note"
+);
 
-            notice.style.cssText =
-              "color:#92400e;" +
-              "background:#fffbeb;" +
-              "border:1px solid #fcd34d;" +
-              "border-radius:8px;" +
-              "padding:10px";
-
-            card.appendChild(notice);
-
-          } else {
-            const ok = element(
-              "p",
-              "Đầu vào nằm trong khoảng min–max " +
-              "quan sát được của dữ liệu huấn luyện. " +
-              "Điều này không bảo đảm dự báo chính xác.",
-              "card-note"
-            );
-
-            ok.style.color = "#166534";
-
-            card.appendChild(ok);
-          }
+note.style.color = "#475569";
+card.appendChild(note);
 
           // Thông tin nguồn dữ liệu
           card.appendChild(
