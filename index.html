@@ -848,12 +848,18 @@ function renderOverview() {
 
         const status = card.querySelector(".status");
 
+       
+        // Đồng bộ nhãn cảnh báo với trang Điểm nghẽn
+        const riskLabels = {
+            HIGH: "Quá tải",
+            MEDIUM: "Cần theo dõi",
+            LOW: "Trong năng lực"
+        };
+
         status.textContent =
-            metric.risk === "HIGH"
-                ? "Quá tải"
-                : metric.workload
-                    ? "Có việc cần xử lý"
-                    : "Đã xử lý hết";
+            metric.workload <= 0
+                ? "Không có việc chờ"
+                : riskLabels[metric.risk] || "Chưa xác định";
 
         status.classList.toggle(
             "warning",
