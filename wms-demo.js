@@ -2004,12 +2004,14 @@ if (shipment.delivery_status === "FAILED") {
                           )
                         : 0;
 
-                const risk =
-                    loadPercent > 100
-                        ? "HIGH"
-                        : loadPercent >= 50
-                            ? "MEDIUM"
-                            : "LOW";
+               
+const risk =
+    loadPercent > 100
+        ? "HIGH"
+        : loadPercent >= 80
+            ? "MEDIUM"
+            : "LOW";
+
 
                 const details =
                     rows.map(
