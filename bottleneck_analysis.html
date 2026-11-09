@@ -1034,26 +1034,44 @@ body[data-mode="bottleneck"] {
     $("bn-risk-badge").textContent =
       riskLabels[risk] || "Chưa xác định";
 
-    if (!hasWorkload) {
-      $("bn-headline").textContent =
-        "Chưa phát hiện điểm nghẽn";
+    
+if (!hasWorkload) {
+  $("bn-headline").textContent =
+    "Chưa phát hiện điểm nghẽn";
 
-      $("bn-description").textContent =
-        "Hiện không có khối lượng cần xử lý " +
-        "theo dữ liệu mô phỏng.";
-    } else {
-      $("bn-headline").textContent =
-        stageName + (
-          risk === "HIGH" ? " đang quá tải" :
-          risk === "MEDIUM" ? " cần theo dõi" :
-          " đang trong năng lực"
-        );
+  $("bn-description").textContent =
+    "Hiện không có khối lượng cần xử lý " +
+    "theo dữ liệu mô phỏng.";
 
-      $("bn-description").textContent =
-        "Đây là công đoạn có tỷ lệ tải cao nhất. " +
-        "Kết quả được tính theo năng lực xử lý " +
-        "trong khung thời gian 2 giờ.";
-    }
+} else if (risk === "HIGH") {
+  $("bn-headline").textContent =
+    "Phát hiện điểm nghẽn tại " + stageName;
+
+  $("bn-description").textContent =
+    stageName + " đang sử dụng " +
+    format(percent) + "% năng lực trong 2 giờ. " +
+    "Khối lượng công việc vượt khả năng xử lý " +
+    "theo cấu hình hiện tại. Cần ưu tiên điều phối.";
+
+} else if (risk === "MEDIUM") {
+  $("bn-headline").textContent =
+    "Cần theo dõi công đoạn " + stageName;
+
+  $("bn-description").textContent =
+    "Chưa phát hiện công đoạn quá tải. " +
+    stageName + " có tỷ lệ tải cao nhất (" +
+    format(percent) + "%) và cần được theo dõi.";
+
+} else {
+  $("bn-headline").textContent =
+    "Chưa phát hiện điểm nghẽn";
+
+  $("bn-description").textContent =
+    "Các công đoạn hiện nằm trong mức tải bình thường. " +
+    stageName + " có tỷ lệ tải cao nhất (" +
+    format(percent) + "%), nhưng chưa có dấu hiệu " +
+    "quá tải theo ngưỡng mô phỏng.";
+}
 
     $("bn-workload").textContent =
       format(hasWorkload ? workload : 0) + " thùng";
