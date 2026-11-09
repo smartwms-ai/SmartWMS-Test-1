@@ -1464,142 +1464,321 @@ function createPackingForm() {
     };
 }
 
+
+/* PACKING: HỖ TRỢ NHIỀU KIỆN */
+
+let packingDetailsCurrent = [];
+
 async function completePacking(id) {
-    const task = records.find(r=>Number(r.packing_id)===id);
+    const task = records.find(
+        r => Number(r.packing_id) === Number(id)
+    );
     if (!task) return;
 
     try {
         const allPicking = await getJson("picking");
-        const pickingRows = (allPicking.data?.tasks || []).filter(
-            x=>Number(x.order_id)===Number(task.order_id)
-        );
-        const picking = pickingRows.find(
-            x=>String(x.status).toUpperCase()==="COMPLETED"
-        );
-        if (!picking) {
-            return toast("Không tìm thấy phiếu Picking đã hoàn thành của đơn hàng này.");
+        const pickingRows = (allPicking.data?.tasks || [])
+            .filter(x =>
+                Number(x.order_id) === Number(task.order_id) &&
+                String(x.status).toUpperCase() === "COMPLETED"
+            );
+
+        if (!pickingRows.length) {
+            return toast("Không tìm thấy Picking đã hoàn thành.");
         }
 
-        const details = await getPickingDetails(Number(picking.picking_id));
+        const picking = pickingRows[0];
+        const details = await getPickingDetails(
+            Number(picking.picking_id)
+        );
+
         const alreadyPacked = (db.details || []).filter(
-            x=>Number(x.packing_id)===id
+            x => Number(x.packing_id) === Number(id)
         );
+
         if (alreadyPacked.length) {
-            return toast("Phiếu này đã có chi tiết đóng gói. Không thể ghi nhận đóng gói lần nữa.");
+            return toast("Phiếu đã có chi tiết đóng gói.");
         }
 
-        openModal("Ghi nhận kiện hàng và sản phẩm", `
+        packingDetailsCurrent = details.map(d => ({
+            ...d,
+            picked_qty: Number(d.picked_qty)
+        }));
+
+        openModal("Đóng gói nhiều kiện", `
             <div class="notice">
-                Tạo một kiện hàng và nhập đủ số lượng đã lấy cho từng dòng.
+                Phân bổ hàng đã lấy vào từng kiện.
+                Tổng số lượng các kiện phải bằng số lượng Picking.
             </div>
 
-            <div class="form-grid">
-                <div class="field">
-                    <label>Loại kiện</label>
-                    <select id="packageType">
-                        <option value="CARTON">Thùng carton</option>
-                        <option value="PALLET">Pallet</option>
-                        <option value="BAG">Bao</option>
-                        <option value="OTHER">Khác</option>
-                    </select>
-                </div>
-                <div class="field">
-                    <label>Khối lượng (kg)</label>
-                    <input id="packageWeight" type="number" min="0" step="1" value="1">
-                </div>
-                <div class="field">
-                    <label>Dài (cm)</label>
-                    <input id="packageLength" type="number" min="0" step="1">
-                </div>
-                <div class="field">
-                    <label>Rộng (cm)</label>
-                    <input id="packageWidth" type="number" min="0" step="1">
-                </div>
-                <div class="field">
-                    <label>Cao (cm)</label>
-                    <input id="packageHeight" type="number" min="0" step="1">
-                </div>
-            </div>
+            <div id="packingPackages"></div>
 
-            <div class="form-section">
-                <h3>Sản phẩm trong kiện</h3>
-                <div class="table-wrap">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Sản phẩm</th>
-                                <th>SL đã lấy</th>
-                                <th>SL đóng gói</th>
-                                <th>Tình trạng</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${details.map(d=>`
-                                <tr data-id="${d.picking_detail_id}">
-                                    <td>${esc(d.sku)} - ${esc(d.product_name)}</td>
-                                    <td>${money(d.picked_qty)}</td>
-                                    <td>
-                                        <input class="packQty" type="number" min="0"
-                                            max="${d.picked_qty}" step="1"
-                                            value="${d.picked_qty}"
-                                            style="width:95px;padding:7px">
-                                    </td>
-                                    <td>
-                                        <select class="condition">
-                                            <option value="GOOD">Tốt</option>
-                                            <option value="DAMAGED">Hư hỏng</option>
-                                        </select>
-                                    </td>
-                                </tr>
-                            `).join("")}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+            <div class="form-actions"
+                 style="display:flex;gap:10px;flex-wrap:wrap">
+                <button type="button"
+                    class="btn"
+                    style="background:#e8f1fb;color:#245b88"
+                    onclick="addPackingPackage()">
+                    + Thêm kiện
+                </button>
 
-            <div class="form-actions">
-                <button class="btn btn-primary" onclick="submitPacking(${id})">
-                    Lưu kiện hàng và hoàn tất
+                <button type="button"
+                    class="btn btn-primary"
+                    onclick="submitPacking(${Number(id)})">
+                    Lưu tất cả kiện và hoàn tất
                 </button>
             </div>
         `);
-    } catch(e) {
+
+        addPackingPackage();
+
+    } catch (e) {
         toast(e.message);
     }
 }
 
-async function submitPacking(id) {
-    const rows = [...document.querySelectorAll("#modalRoot tbody tr[data-id]")];
-    const items = rows.map(row=>({
-        picking_detail_id:Number(row.dataset.id),
-        packed_qty:Number(row.querySelector(".packQty").value),
-        condition_status:row.querySelector(".condition").value,
-        note:""
-    })).filter(x=>x.packed_qty>0);
+function addPackingPackage() {
+    const container = document.getElementById(
+        "packingPackages"
+    );
+    if (!container) return;
 
-    if (!items.length) {
-        return toast("Vui lòng nhập số lượng đóng gói.");
+    const index = container.children.length + 1;
+
+    const section = document.createElement("section");
+    section.className = "packing-package";
+    section.style.cssText = `
+        border:1px solid #dce6ef;
+        border-radius:12px;
+        padding:18px;
+        margin:16px 0;
+        background:#fff;
+    `;
+
+    section.innerHTML = `
+        <div style="display:flex;justify-content:space-between;
+                    align-items:center;gap:10px">
+            <h3 class="package-title">Kiện ${index}</h3>
+            <button type="button" class="btn"
+                onclick="removePackingPackage(this)"
+                style="background:#fee2e2;color:#991b1b">
+                Xóa kiện
+            </button>
+        </div>
+
+        <div class="form-grid">
+            <div class="field">
+                <label>Loại kiện</label>
+                <select class="packageType">
+                    <option value="CARTON">Thùng carton</option>
+                    <option value="PALLET">Pallet</option>
+                    <option value="BAG">Bao</option>
+                    <option value="OTHER">Khác</option>
+                </select>
+            </div>
+            <div class="field">
+                <label>Khối lượng (kg)</label>
+                <input class="packageWeight" type="number"
+                    min="0.01" step="any" value="1">
+            </div>
+            <div class="field">
+                <label>Dài (cm)</label>
+                <input class="packageLength" type="number"
+                    min="0" step="any">
+            </div>
+            <div class="field">
+                <label>Rộng (cm)</label>
+                <input class="packageWidth" type="number"
+                    min="0" step="any">
+            </div>
+            <div class="field">
+                <label>Cao (cm)</label>
+                <input class="packageHeight" type="number"
+                    min="0" step="any">
+            </div>
+        </div>
+
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Sản phẩm</th>
+                        <th>SL đã lấy</th>
+                        <th>SL trong kiện</th>
+                        <th>Tình trạng</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${packingDetailsCurrent.map(d => `
+                        <tr data-id="${Number(d.picking_detail_id)}">
+                            <td>${esc(d.sku)} -
+                                ${esc(d.product_name)}</td>
+                            <td>${Number(d.picked_qty)}</td>
+                            <td>
+                                <input class="packQty"
+                                    type="number" min="0"
+                                    max="${Number(d.picked_qty)}"
+                                    step="1" value="0"
+                                    style="width:95px;padding:7px">
+                            </td>
+                            <td>
+                                <select class="condition">
+                                    <option value="GOOD">Tốt</option>
+                                    <option value="DAMAGED">Hư hỏng</option>
+                                </select>
+                            </td>
+                        </tr>
+                    `).join("")}
+                </tbody>
+            </table>
+        </div>
+    `;
+
+    container.appendChild(section);
+    renumberPackingPackages();
+}
+
+function removePackingPackage(button) {
+    const container = document.getElementById(
+        "packingPackages"
+    );
+    if (!container || container.children.length <= 1) {
+        return toast("Phải có ít nhất một kiện.");
     }
 
-    const packages = [{
-        package_type:document.getElementById("packageType").value,
-        weight:Number(document.getElementById("packageWeight").value||0),
-        length:Number(document.getElementById("packageLength").value||0),
-        width:Number(document.getElementById("packageWidth").value||0),
-        height:Number(document.getElementById("packageHeight").value||0),
-        items
-    }];
+    button.closest(".packing-package").remove();
+    renumberPackingPackages();
+}
+
+function renumberPackingPackages() {
+    document.querySelectorAll(
+        "#packingPackages .packing-package"
+    ).forEach((section, index) => {
+        section.querySelector(".package-title").textContent =
+            "Kiện " + (index + 1);
+    });
+}
+
+async function submitPacking(id) {
+    const sections = [...document.querySelectorAll(
+        "#packingPackages .packing-package"
+    )];
+
+    if (!sections.length) {
+        return toast("Cần tạo ít nhất một kiện.");
+    }
+
+    const totals = new Map(
+        packingDetailsCurrent.map(d => [
+            Number(d.picking_detail_id), 0
+        ])
+    );
+
+    const packages = [];
+
+    for (const section of sections) {
+        const items = [];
+
+        for (const row of section.querySelectorAll(
+            "tbody tr[data-id]"
+        )) {
+            const detailId = Number(row.dataset.id);
+            const input = row.querySelector(".packQty");
+            const qty = Number(input.value);
+
+            if (
+                input.value.trim() === "" ||
+                !Number.isInteger(qty) ||
+                qty < 0 ||
+                qty > Number(input.max)
+            ) {
+                return toast("Số lượng đóng gói không hợp lệ.");
+            }
+
+            if (qty > 0) {
+                totals.set(
+                    detailId,
+                    totals.get(detailId) + qty
+                );
+
+                items.push({
+                    picking_detail_id: detailId,
+                    packed_qty: qty,
+                    condition_status:
+                        row.querySelector(".condition").value,
+                    note: ""
+                });
+            }
+        }
+
+        if (!items.length) {
+            return toast("Mỗi kiện phải có ít nhất một sản phẩm.");
+        }
+
+        const weightInput = section.querySelector(".packageWeight");
+        const weight = Number(weightInput.value);
+
+        if (
+            weightInput.value.trim() === "" ||
+            !Number.isFinite(weight) ||
+            weight <= 0
+        ) {
+            return toast("Khối lượng kiện phải lớn hơn 0.");
+        }
+
+        const dimensions = [
+            ".packageLength",
+            ".packageWidth",
+            ".packageHeight"
+        ].map(selector => {
+            const input = section.querySelector(selector);
+            return input.value.trim() === ""
+                ? 0
+                : Number(input.value);
+        });
+
+        if (dimensions.some(x => !Number.isFinite(x) || x < 0)) {
+            return toast("Kích thước kiện không hợp lệ.");
+        }
+
+        packages.push({
+            package_type:
+                section.querySelector(".packageType").value,
+            weight,
+            length: dimensions[0],
+            width: dimensions[1],
+            height: dimensions[2],
+            items
+        });
+    }
+
+    for (const detail of packingDetailsCurrent) {
+        const expected = Number(detail.picked_qty);
+        const actual = totals.get(
+            Number(detail.picking_detail_id)
+        );
+
+        if (actual !== expected) {
+            return toast(
+                "Chưa phân bổ đúng số lượng của " +
+                detail.sku + ". Cần " + expected +
+                ", đã phân bổ " + actual + "."
+            );
+        }
+    }
 
     try {
-        const r = await postJson("packing",{
-            action:"complete",
-            packing_id:id,
+        const r = await postJson("packing", {
+            action: "complete",
+            packing_id: id,
             packages
         });
+
         closeModal();
         toast(r.message);
         await loadData();
-    } catch(e) {
+
+    } catch (e) {
         toast(e.message);
     }
 }
