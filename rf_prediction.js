@@ -37,7 +37,6 @@
     active_equipment_count: "Thiết bị hoạt động"
   };
 
-  
   const target = document.getElementById(
     "rf-prediction-results"
   );
@@ -55,22 +54,17 @@
 
   function validate(row, model) {
     const errors = [];
-    const warnings = [];
 
-    // Kiểm tra thiếu dữ liệu
     for (const key of featureNames) {
       if (
         row[key] === null ||
         row[key] === undefined ||
         row[key] === ""
       ) {
-        errors.push(
-          "Thiếu " + (labels[key] || key)
-        );
+        errors.push("Thiếu " + (labels[key] || key));
       }
     }
 
-    // Kiểm tra dữ liệu số
     for (const key of numericFeatures) {
       const value = row[key];
 
@@ -93,14 +87,10 @@
       }
     }
 
-   
-    // Kiểm tra công đoạn
     if (!Object.prototype.hasOwnProperty.call(stageNames, row.stage)) {
       errors.push("Công đoạn không hợp lệ");
     }
 
-
-    // Kiểm tra biến phân loại
     if (
       Array.isArray(model.categorical) &&
       Array.isArray(model.categories)
@@ -116,9 +106,7 @@
 
         if (
           !Array.isArray(model.categories[index]) ||
-          !model.categories[index].includes(
-            String(row[key])
-          )
+          !model.categories[index].includes(String(row[key]))
         ) {
           errors.push(
             "Giá trị chưa được huấn luyện: " + key
@@ -127,8 +115,7 @@
       });
     }
 
-    
-    return { errors, warnings };
+    return errors;
   }
 
   function render() {
@@ -136,27 +123,19 @@
 
     target.replaceChildren();
 
-    const model =
-      window.WmsRF && window.WmsRF.model;
-
+    const model = window.WmsRF && window.WmsRF.model;
     const rows = window.WmsRFInputs;
 
     if (!model) {
       target.appendChild(
-        element(
-          "p",
-          "Đang tải mô hình Random Forest..."
-        )
+        element("p", "Đang tải mô hình Random Forest...")
       );
       return;
     }
 
     if (!Array.isArray(rows) || !rows.length) {
       target.appendChild(
-        element(
-          "p",
-          "Chưa có dữ liệu đầu vào từ WMS."
-        )
+        element("p", "Chưa có dữ liệu đầu vào từ WMS.")
       );
       return;
     }
@@ -164,91 +143,77 @@
     rows.forEach(row => {
       const card = element("div", "");
 
-      card.style.cssText =
-        "border:1px solid #dbe4ef;" +
-        "border-radius:12px;" +
-        "padding:16px;" +
-        "margin-bottom:12px";
+      card.style.cssText = [
+        "border:1px solid #dbe4ef",
+        "border-radius:14px",
+        "padding:20px",
+        "margin-bottom:14px",
+        "background:#ffffff"
+      ].join(";");
 
-      card.appendChild(
-        element(
-          "h3",
-          stageNames[row.stage] || row.stage
-        )
+      const heading = element(
+        "h3",
+        stageNames[row.stage] || row.stage
       );
 
-      const { errors, warnings } =
-        validate(row, model);
+      heading.style.cssText =
+        "margin:0 0 14px;color:#1d4267;font-size:18px";
+
+      card.appendChild(heading);
+
+      const errors = validate(row, model);
 
       if (errors.length) {
-        card.appendChild(
-          element(
-            "p",
-            "Chưa đủ dữ liệu hợp lệ để dự báo."
-          )
+        const message = element(
+          "p",
+          "Chưa đủ dữ liệu hợp lệ để dự báo."
         );
 
-        card.appendChild(
-          element(
-            "p",
-            errors.join("; "),
-            "card-note"
-          )
+        message.style.cssText =
+          "margin:0 0 8px;color:#475569;font-size:14px";
+
+        card.appendChild(message);
+
+        const detail = element(
+          "p",
+          errors.join("; ")
         );
+
+        detail.style.cssText =
+          "margin:0;color:#b45309;font-size:12px";
+
+        card.appendChild(detail);
 
       } else {
         try {
-          const minutes =
-            window.WmsRF.predict(row);
+          const minutes = window.WmsRF.predict(row);
 
           if (!Number.isFinite(minutes)) {
-            throw new Error(
-              "Kết quả không phải số hợp lệ"
-            );
+            throw new Error("Kết quả không phải số hợp lệ");
           }
 
-          card.appendChild(
-            element(
-              "h2",
-              minutes.toFixed(2) + " phút"
-            )
+          const result = element(
+            "h2",
+            minutes.toFixed(2) + " phút"
           );
 
-          // Cảnh báo dữ liệu ngoài phạm vi
-          const note = element(
-  "p",
-  "Dự báo từ mô hình Random Forest v2. " +
-  "Đầu vào đã qua kiểm tra định dạng và danh mục, " +
-  "nhưng chưa xác minh phạm vi phân phối dữ liệu huấn luyện. " +
-  "Kết quả chỉ phục vụ mô phỏng.",
-  "card-note"
-);
+          result.style.cssText = [
+            "margin:0",
+            "font-size:28px",
+            "font-weight:800",
+            "color:#1d4267"
+          ].join(";");
 
-note.style.color = "#475569";
-card.appendChild(note);
-
-          // Thông tin nguồn dữ liệu
-          card.appendChild(
-            element(
-              "p",
-              "Lưu ý: order_count được suy ra " +
-              "từ phiếu/đơn nghiệp vụ WMS, " +
-              "chưa xác minh hoàn toàn tương đương " +
-              "dữ liệu SQL. Pallet, thiết bị, " +
-              "ca và độ phức tạp là cấu hình " +
-              "kịch bản do người dùng nhập.",
-              "card-note"
-            )
-          );
+          card.appendChild(result);
 
         } catch (error) {
-          card.appendChild(
-            element(
-              "p",
-              "Không thể dự báo: " +
-              error.message
-            )
+          const message = element(
+            "p",
+            "Không thể dự báo: " + error.message
           );
+
+          message.style.color = "#b91c1c";
+          card.appendChild(message);
         }
       }
 
@@ -261,9 +226,7 @@ card.appendChild(note);
 
     try {
       if (!window.WmsRF) {
-        throw new Error(
-          "Chưa nạp rf_browser.js"
-        );
+        throw new Error("Chưa nạp rf_browser.js");
       }
 
       if (!window.WmsRF.model) {
@@ -274,8 +237,7 @@ card.appendChild(note);
 
     } catch (error) {
       target.textContent =
-        "Lỗi tải mô hình: " +
-        error.message;
+        "Lỗi tải mô hình: " + error.message;
     }
   }
 
