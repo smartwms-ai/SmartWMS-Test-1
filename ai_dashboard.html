@@ -13,6 +13,34 @@
     <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="smartwms-unified.css?v=1">
+<style>
+/* Tinh gọn giao diện phần thông số AI, không thay đổi thuật toán */
+.ai-load-strip{display:flex;align-items:center;gap:16px;padding:18px 22px;margin:16px 0 18px;background:#fff;border:1px solid #dfe8f2;border-radius:15px;box-shadow:0 3px 12px rgba(30,60,90,.035)}
+.ai-load-icon,.ai-input-icon{display:grid;place-items:center;flex:0 0 42px;height:42px;border-radius:12px;background:#eaf4fd;color:#2075b8;font-size:22px}
+.ai-load-content{min-width:0;flex:1}.ai-load-label{font-size:10px;font-weight:800;letter-spacing:1.2px;color:#7c91a8;margin-bottom:5px}
+#video-summary{font-size:14px;font-weight:700;color:#254866;margin:0;line-height:1.6}
+.ai-load-link{flex-shrink:0;border:1px solid #d8e6f2;border-radius:9px;padding:10px 13px;color:#2375b2;text-decoration:none;font-size:12px;font-weight:700}
+.ai-input-details{margin:0 0 20px;border:1px solid #dfe8f2;border-radius:15px;background:#fff;overflow:hidden}
+.ai-input-details>summary{display:flex;align-items:center;gap:14px;padding:18px 22px;cursor:pointer;list-style:none}
+.ai-input-details>summary::-webkit-details-marker{display:none}
+.ai-input-heading{display:flex;flex-direction:column;gap:5px;flex:1;min-width:0}
+.ai-input-heading strong{font-size:15px;color:#244867}
+.ai-input-heading small{font-size:11px;color:#8496a9;line-height:1.6}
+.ai-input-toggle{font-size:12px;color:#2075b8;font-weight:700;white-space:nowrap}
+.ai-chevron{font-size:17px;margin-left:5px;display:inline-block;transition:transform .2s}
+.ai-input-details[open] .ai-chevron{transform:rotate(180deg)}
+.ai-input-inner{border-top:1px solid #e9eff6;padding:18px 22px 22px}
+.ai-input-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:15px;font-size:12px;color:#6f869d}
+.ai-input-toolbar a{color:#2075b8;font-weight:700;text-decoration:none}
+#rf-input-status .table-wrap{overflow-x:auto;border:1px solid #e4edf5;border-radius:10px}
+#rf-input-status table{width:100%;min-width:730px;border-collapse:collapse;font-size:12px}
+#rf-input-status th{background:#f4f8fc;color:#5c7892;font-size:11px;text-align:left;padding:12px 10px;white-space:nowrap}
+#rf-input-status td{border-bottom:1px solid #e8eef5;padding:11px 10px;color:#3d5b77}
+#rf-input-status tbody tr:nth-child(even){background:#fbfdff}
+#rf-input-status tbody tr:last-child td{border-bottom:0}
+#rf-input-status .card-note{font-size:11px;color:#8a9caf;margin:12px 0 0}
+@media(max-width:650px){.ai-load-strip{padding:15px;gap:10px;flex-wrap:wrap}.ai-load-link{margin-left:52px}.ai-input-details>summary{padding:15px;gap:10px}.ai-input-heading small{display:none}.ai-input-toggle{font-size:11px}.ai-input-inner{padding:15px}}
+</style>
 </head>
 
 <body data-mode="ai">
@@ -64,31 +92,33 @@
         </a>
     </div>
 
-    <section class="panel">
-        <p id="video-summary"></p>
-
-        <p class="card-note">
-            Tỷ lệ tải = số thùng cần xử lý ÷ năng lực trong 2 giờ.
-            Trên 100% là quá tải, từ 50% đến 100% cần theo dõi.
-            Năng suất và nhân sự là giả định có thể điều chỉnh
-            ở trang Điểm nghẽn.
-        </p>
+    <section class="ai-load-strip" aria-label="Tình trạng tải công đoạn">
+      <div class="ai-load-icon">▥</div>
+      <div class="ai-load-content">
+        <div class="ai-load-label">TÌNH TRẠNG VẬN HÀNH</div>
+        <p id="video-summary">Đang cập nhật tình trạng kho...</p>
+      </div>
+      <a href="bottleneck_analysis.html" class="ai-load-link">Xem điểm nghẽn ↗</a>
     </section>
 
-    <section class="panel" id="rf-input-panel">
-        <h2>Random Forest Regression — Kiểm tra dữ liệu đầu vào</h2>
-
-        <p class="card-note">
-            Các giá trị có sẵn được lấy từ WMS.
-            Các biến chưa có dữ liệu sẽ được đánh dấu;
-            hệ thống chưa tự động suy đoán giá trị.
-        </p>
-
-        <div id="rf-input-status">
-            Đang kiểm tra dữ liệu...
+    <details class="ai-input-details" id="rf-input-panel">
+      <summary>
+        <span class="ai-input-icon">▤</span>
+        <span class="ai-input-heading">
+          <strong>Dữ liệu đầu vào mô hình</strong>
+          <small>Xem các biến được lấy từ WMS và thông số kịch bản của 5 công đoạn</small>
+        </span>
+        <span class="ai-input-toggle">Xem chi tiết <span class="ai-chevron">⌄</span></span>
+      </summary>
+      <div class="ai-input-inner">
+        <div class="ai-input-toolbar">
+          <span>Thông số phục vụ kiểm tra đầu vào Random Forest</span>
+          <a href="simulation.html#scenario-settings">Điều chỉnh kịch bản ↗</a>
         </div>
-    </section>
-<section class="panel"><h2>Thiết lập kịch bản vận hành</h2><p class="card-note">Các biến đầu vào được cấu hình tập trung tại trang Mô phỏng kho để tránh nhập liệu ở nhiều nơi.</p><a class="btn" href="simulation.html#scenario-settings">Chỉnh sửa kịch bản vận hành</a></section>
+        <div id="rf-input-status">Đang kiểm tra dữ liệu...</div>
+      </div>
+    </details>
+
     <section class="panel" id="rf-prediction-panel">
     <h2>Dự báo thời gian xử lý — Random Forest</h2>
     <p class="card-note">
