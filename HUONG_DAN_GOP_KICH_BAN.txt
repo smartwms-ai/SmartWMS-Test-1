@@ -1,0 +1,11 @@
+SMARTWMS - GỘP CẤU HÌNH KỊCH BẢN
+
+1. Mở simulation.html, kéo đến mục Thiết lập kịch bản vận hành.
+2. Lưu năng lực từng công đoạn (nhân viên, thùng/người/giờ).
+3. Điền bảng cấu hình AI (pallet, thiết bị, ca, độ phức tạp), nhấn Lưu cấu hình AI.
+4. Mở ai_dashboard.html để xem dự đoán, bottleneck_analysis.html để xem tải.
+5. Hai mô hình dùng chung nơi nhập nhưng có các phép tính và biến khác nhau.
+6. Dữ liệu lưu trong localStorage của cùng trình duyệt và cùng đường dẫn GitHub Pages.
+7. Tải các file từ thư mục này vào GỐC repository; không tải file ZIP nguyên khối.
+
+File thay đổi: simulation.html, scenario-settings.js (mới), ai_dashboard.html, bottleneck_analysis.html.

@@ -1,0 +1,7 @@
+(function(){"use strict";
+const names={receiving:"Nhận hàng",putaway:"Cất hàng",picking:"Lấy hàng",packing:"Đóng gói",shipping:"Xuất hàng"};
+function $(id){return document.getElementById(id)}
+function fill(){try{const stage=$("scenario-stage").value;const item=WmsDemo.analysis().find(x=>x.stage===stage);if(!item)return;$("scenario-workers").value=item.workers;$("scenario-per-hour").value=item.perHour;}catch(e){$("scenario-capacity-status").textContent="Không đọc được năng lực: "+e.message;}}
+function init(){const form=$("scenario-capacity-form");if(!form)return;$("scenario-stage").addEventListener("change",fill);form.addEventListener("submit",async e=>{e.preventDefault();const stage=$("scenario-stage").value,workers=Number($("scenario-workers").value),perHour=Number($("scenario-per-hour").value),status=$("scenario-capacity-status"),button=form.querySelector('button[type="submit"]');if(!Object.hasOwn(names,stage)||!Number.isInteger(workers)||workers<1||workers>20||!Number.isInteger(perHour)||perHour<1||perHour>500){status.textContent="Cần 1–20 nhân viên và 1–500 thùng/người/giờ.";return;}button.disabled=true;try{await WmsDemo.setCapacity(stage,workers,perHour);status.textContent="Đã lưu năng lực cho "+names[stage]+". Trang Điểm nghẽn sẽ dùng cấu hình mới.";if(typeof simUpdate==="function")simUpdate();}catch(err){status.textContent="Lưu thất bại: "+err.message;}finally{button.disabled=false;}});fill();}
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init,{once:true});else init();
+})();

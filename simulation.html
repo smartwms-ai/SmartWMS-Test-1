@@ -121,6 +121,31 @@
 <div class="date-box"><span>Chế độ</span><strong>Mô phỏng</strong></div>
 </section>
 
+
+<section class="sim-scenario-panel" id="scenario-settings">
+  <div class="sim-scenario-head">
+    <h2>Thiết lập kịch bản vận hành</h2>
+    <p>Cấu hình một lần tại đây. Dự đoán AI sử dụng số pallet, thiết bị, ca làm việc và độ phức tạp; Phân tích điểm nghẽn sử dụng số nhân viên và năng suất. Hai kết quả là hai phép tính khác nhau.</p>
+  </div>
+  <div class="sim-scenario-body">
+    <section class="sim-scenario-card">
+      <h3>Năng lực xử lý của 5 công đoạn</h3>
+      <p>Chọn công đoạn, điều chỉnh nhân sự và năng suất, sau đó lưu. Số liệu được dùng để tính tải và điểm nghẽn.</p>
+      <form id="scenario-capacity-form">
+        <label>Công đoạn <select id="scenario-stage" required>
+          <option value="receiving">Nhận hàng</option><option value="putaway">Cất hàng</option><option value="picking">Lấy hàng</option><option value="packing">Đóng gói</option><option value="shipping">Xuất hàng</option>
+        </select></label>
+        <label>Số nhân viên <input id="scenario-workers" type="number" min="1" max="20" step="1" required></label>
+        <label>Năng suất (thùng/người/giờ) <input id="scenario-per-hour" type="number" min="1" max="500" step="1" required></label>
+        <button type="submit">Lưu năng lực xử lý</button>
+        <p id="scenario-capacity-status" role="status" aria-live="polite"></p>
+      </form>
+    </section>
+    <section class="sim-scenario-card" id="rf-config-container">Đang tải cấu hình AI...</section>
+  </div>
+  <p class="sim-scenario-foot">Lưu ý: đây là dữ liệu kịch bản do người dùng thiết lập; không phải số liệu tự động đo từ kho. <a href="ai_dashboard.html">Xem Dự đoán AI</a> · <a href="bottleneck_analysis.html">Xem Phân tích điểm nghẽn</a></p>
+</section>
+
 <section class="sim-layout">
 <div class="sim-panel">
 <div class="sim-panel-heading">
@@ -382,8 +407,14 @@ Dữ liệu được nhập và xử lý trên SmartWMS, không phải dữ li�
 <p>Dữ liệu trên website là dữ liệu mô phỏng.</p>
 </footer>
 </main>
+<style>
+.sim-scenario-panel{margin:22px 0;padding:24px;border:1px solid #dbe6f1;border-radius:16px;background:#fff;color:#294761}.sim-scenario-head h2{margin:0 0 8px}.sim-scenario-head p,.sim-scenario-card p,.sim-scenario-foot{color:#6c8195;line-height:1.6}.sim-scenario-body{display:grid;grid-template-columns:minmax(280px,1fr) minmax(0,1.5fr);gap:18px;margin-top:20px}.sim-scenario-card{border:1px solid #e0e9f2;border-radius:12px;padding:20px;min-width:0}.sim-scenario-card h3{margin-top:0}.sim-scenario-card label{display:block;font-weight:600;margin:12px 0}.sim-scenario-card input,.sim-scenario-card select{display:block;width:100%;box-sizing:border-box;margin-top:7px;padding:11px;border:1px solid #cbdbea;border-radius:8px;background:white;color:#294761}.sim-scenario-card button{border:0;border-radius:8px;background:#2377b9;color:#fff;padding:12px 16px;cursor:pointer;font-weight:700}.sim-scenario-card .table-wrap{overflow-x:auto}.sim-scenario-card table{border-collapse:collapse}.sim-scenario-card th,.sim-scenario-card td{padding:8px;border-bottom:1px solid #e4edf5;text-align:left}.sim-scenario-card td select,.sim-scenario-card td input{min-width:110px}.sim-scenario-foot{margin-bottom:0}@media(max-width:850px){.sim-scenario-body{grid-template-columns:1fr}.sim-scenario-panel{padding:14px}}
+</style>
 
-<script src="wms-demo.js?v=10"></script>
+<script src="wms-demo.js?v=12"></script>
+<script src="rf_browser.js?v=1"></script>
+<script src="rf_config.js?v=2"></script>
+<script src="scenario-settings.js?v=1"></script>
 <script>
 "use strict";
 

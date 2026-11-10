@@ -770,15 +770,16 @@ body[data-mode="bottleneck"] {
     <section class="bn-panel">
       <div class="bn-panel-head">
         <div>
-          <h2>Điều chỉnh năng lực mô phỏng</h2>
+          <h2>Thiết lập kịch bản vận hành</h2>
           <p>
-            Chọn công đoạn, thay đổi nhân sự và năng suất
-            để đánh giá khả năng giảm nghẽn.
+            Năng lực được thiết lập tập trung tại trang Mô phỏng kho.
+            Kết quả ở đây tự tính lại từ dữ liệu đã lưu.
           </p>
         </div>
       </div>
 
-      <form class="bn-form" id="bn-capacity-form">
+      <p><a class="bn-btn" href="simulation.html#scenario-settings" style="display:inline-block;text-decoration:none">Chỉnh sửa kịch bản vận hành</a></p>
+      <div hidden aria-hidden="true"><form class="bn-form" id="bn-capacity-form">
         <label class="bn-field full">
           Công đoạn
           <select name="stage" id="bn-stage" required>
@@ -823,7 +824,7 @@ body[data-mode="bottleneck"] {
 
       <p class="bn-form-status"
          id="bn-capacity-status"
-         role="status"></p>
+         role="status"></p></div>
     </section>
 
     <section class="bn-panel">
