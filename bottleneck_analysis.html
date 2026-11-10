@@ -765,10 +765,57 @@ body[data-mode="bottleneck"] {
   </section>
 
   <!-- CAPACITY + RECOMMENDATIONS -->
-  <div class="bn-bottom">
 
-   <h2>Kịch bản vận hành đang áp dụng</h2>
-    <section class="bn-panel">
+<div class="bn-bottom">
+
+  <section class="bn-panel" style="
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    gap:16px;
+    padding:24px;
+    min-height:0;
+  ">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <span style="
+        display:grid;
+        place-items:center;
+        width:44px;
+        height:44px;
+        flex-shrink:0;
+        background:#eaf4ff;
+        color:#1976b8;
+        border-radius:12px;
+        font-size:22px;
+      ">⚙</span>
+
+      <div>
+        <h2 style="margin:0 0 6px;font-size:19px;">
+          Kịch bản vận hành
+        </h2>
+        <p style="margin:0;color:#71869b;font-size:12px;">
+          Năng lực xử lý được đồng bộ từ Mô phỏng kho.
+        </p>
+      </div>
+    </div>
+
+    <a href="simulation.html#scenario-settings"
+       style="
+         display:inline-flex;
+         align-self:flex-start;
+         padding:11px 16px;
+         background:#edf6ff;
+         color:#176da8;
+         border:1px solid #c7dff1;
+         border-radius:9px;
+         font-size:13px;
+         font-weight:700;
+         text-decoration:none;
+       ">
+      ✎ Điều chỉnh kịch bản
+    </a>
+  </section>
+
       <div class="bn-panel-head">
         <div>
           <h2>Đề xuất xử lý ưu tiên</h2>
