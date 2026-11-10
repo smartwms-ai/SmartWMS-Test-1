@@ -430,6 +430,7 @@ const WmsDemo = (() => {
             };
 
             if (stage === "receiving") {
+                row.master_code = "NK-" + id;
                 row.supplier_name = find(
                     suppliers,
                     "supplier_id",
@@ -485,36 +486,27 @@ const WmsDemo = (() => {
                     );
                 }
 
-                const destination = find(
-                    locations,
-                    "location_id",
-                    data.destination_location_id
-                );
-
-                if (
-                    !destination.location_code.startsWith(
-                        "STO"
-                    )
-                ) {
-                    throw new Error(
-                        "Hãy chọn vị trí lưu trữ STO."
-                    );
+                // Nhiệm vụ tự động chờ nhân viên chọn vị trí STO.
+                // Với dữ liệu cũ/kịch bản, vẫn hỗ trợ vị trí có sẵn.
+                const destination = data.destination_location_id
+                    ? find(locations, "location_id", data.destination_location_id)
+                    : null;
+                if (destination && !destination.location_code.startsWith("STO")) {
+                    throw new Error("Hãy chọn vị trí lưu trữ STO.");
                 }
 
                 batch.available_qty -= quantity;
-
                 Object.assign(row, {
                     quantity,
-                    product_name:
-                        batch.product_name,
-                    batch_code:
-                        batch.batch_code,
-                    destination_location:
-                        destination.location_code
+                    product_name: batch.product_name,
+                    batch_code: batch.batch_code,
+                    destination_location: destination ? destination.location_code : "Chưa phân vị trí",
+                    destination_location_id: destination ? destination.location_id : null
                 });
             }
 
             if (stage === "picking") {
+                row.master_code = "XK-" + id;
                 const order = find(
                     get(stage, state).orders,
                     "order_id",
@@ -793,6 +785,14 @@ if (shipment.delivery_status === "FAILED") {
                 data[idKey]
             );
 
+            // Công đoạn sau chỉ cần xác nhận Hoàn tất; hệ thống tự ghi nhận bắt đầu.
+            if (!workingState && row.status === "PENDING" &&
+                ((action === "complete" && ["putaway", "packing"].includes(stage)) ||
+                 (action === "create_shipment" && stage === "shipping"))) {
+                row.status = "IN_PROGRESS";
+                row.started_at = new Date().toISOString();
+            }
+
             if (
                 action === "start" &&
                 row.status === "PENDING"
@@ -909,8 +909,15 @@ if (shipment.delivery_status === "FAILED") {
                 }
 
                 if (stage === "putaway") {
-                    row.stock_qty =
-                        amount(row.quantity, true);
+                    if (!row.destination_location_id) {
+                        const destination = find(locations, "location_id", Number(data.destination_location_id));
+                        if (!destination.location_code.startsWith("STO")) {
+                            throw new Error("Phải chọn vị trí lưu trữ STO trước khi hoàn tất.");
+                        }
+                        row.destination_location_id = destination.location_id;
+                        row.destination_location = destination.location_code;
+                    }
+                    row.stock_qty = amount(row.quantity, true);
                 }
 
                 if (stage === "picking") {
@@ -1047,6 +1054,42 @@ if (shipment.delivery_status === "FAILED") {
 
                 row.status = "COMPLETED";
 
+                // Chỉ tự chuyển phiếu trong vận hành thật. Seed/importStageScenario
+                // đã có trình dựng dữ liệu riêng, không được tạo trùng.
+                if (!workingState && stage === "receiving") {
+                    for (const batch of state.batches.filter(b =>
+                        row.items.some(item => Number(item.receiving_item_id) === Number(b.receiving_item_id))
+                    )) {
+                        if (num(batch.available_qty) <= 0) continue;
+                        if (state.putaways.some(t => Number(t.batch_id) === Number(batch.batch_id))) continue;
+                        execute("putaway", {
+                            action: "create", employee_id: row.employee_id,
+                            batch_id: batch.batch_id, quantity: batch.available_qty,
+                            master_code: row.master_code || row.receipt_code,
+                            receipt_id: row.receipt_id,
+                            automatic: true
+                        }, state);
+                    }
+                }
+                if (!workingState && stage === "picking" &&
+                    !state.packings.some(p => Number(p.picking_id) === Number(row.picking_id))) {
+                    execute("packing", {
+                        action: "create", employee_id: row.employee_id,
+                        picking_id: row.picking_id,
+                        master_code: row.master_code || row.picking_code,
+                        automatic: true
+                    }, state);
+                }
+                if (!workingState && stage === "packing" &&
+                    !state.shipping_orders.some(t => Number(t.order_id) === Number(row.order_id))) {
+                    execute("shipping", {
+                        action: "create", employee_id: row.employee_id,
+                        order_id: row.order_id,
+                        master_code: row.master_code || row.order_code,
+                        automatic: true
+                    }, state);
+                }
+
                 if (
                     !workingState &&
                     row.started_at
@@ -1164,9 +1207,11 @@ if (shipment.delivery_status === "FAILED") {
             return execute(stage);
         }
 
-        return locked(
-            () => execute(stage, payload)
-        );
+        if (payload.action === "create" &&
+            ["putaway", "packing", "shipping"].includes(stage)) {
+            throw new Error("Công đoạn này tự nhận phiếu từ bước trước. Không cần tạo phiếu mới.");
+        }
+        return locked(() => execute(stage, payload));
     }
 
     function seed(state) {

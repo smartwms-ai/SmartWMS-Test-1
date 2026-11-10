@@ -582,7 +582,7 @@ tr:last-child td {
 <div id="modalRoot"></div>
 <div id="toastRoot"></div>
 
-<script src="wms-demo.js?v=7"></script>
+<script src="wms-demo.js?v=10"></script>
 <script>
 const params = new URLSearchParams(location.search);
 const requestedStage = (params.get("stage") || "receiving").toLowerCase();
@@ -643,6 +643,12 @@ let extraRecords = [];
 
 document.getElementById("pageTitle").textContent = cfg.title;
 document.getElementById("pageDescription").textContent = cfg.description;
+const createButton = document.getElementById("createButton");
+if (["putaway", "packing", "shipping"].includes(stage)) {
+    createButton.style.display = "none";
+} else {
+    createButton.textContent = stage === "receiving" ? "+ Tạo phiếu nhập kho" : "+ Tạo phiếu xuất kho";
+}
 document.getElementById("tableTitle").textContent = "Danh sách " + cfg.title;
 document.getElementById("extraTitle").textContent = cfg.extra;
 
@@ -789,7 +795,7 @@ function renderTable() {
         headers = ["Mã phiếu","Nhà cung cấp","Nhân viên","Thời gian đến","Vị trí nhận","Số sản phẩm","Trạng thái","Thao tác"];
 
         rows = filtered.map(r => [
-            `<b>${esc(r.receipt_code)}</b>`,
+            `<b>${esc(r.master_code || r.receipt_code)}</b><br><small>${esc(r.receipt_code)}</small>`,
             esc(r.supplier_name),
             esc(r.employee_name),
             esc(r.arrival_time),
@@ -803,7 +809,7 @@ function renderTable() {
         headers = ["Mã phiếu","Sản phẩm","Lô hàng","Số lượng","Vị trí đích","Nhân viên","Trạng thái","Thao tác"];
 
         rows = filtered.map(r => [
-            `<b>${esc(r.putaway_code)}</b>`,
+            `<b>${esc(r.master_code || r.putaway_code)}</b><br><small>${esc(r.putaway_code)}</small>`,
             esc(r.product_name),
             esc(r.batch_code),
             money(r.quantity),
@@ -817,7 +823,7 @@ function renderTable() {
         headers = ["Mã phiếu","Đơn hàng","Nhân viên","Số dòng hàng","SL yêu cầu","SL đã lấy","Trạng thái","Thao tác"];
 
         rows = filtered.map(r => [
-            `<b>${esc(r.picking_code)}</b>`,
+            `<b>${esc(r.master_code || r.picking_code)}</b><br><small>${esc(r.picking_code)}</small>`,
             esc(r.order_code),
             esc(r.employee_name),
             money(r.detail_count),
@@ -831,7 +837,7 @@ function renderTable() {
         headers = ["Mã phiếu","Đơn hàng","Nhân viên","Số kiện","SL đã đóng","Trạng thái","Thao tác"];
 
         rows = filtered.map(r => [
-            `<b>${esc(r.packing_code)}</b>`,
+            `<b>${esc(r.master_code || r.packing_code)}</b><br><small>${esc(r.packing_code)}</small>`,
             esc(r.order_code),
             esc(r.employee_name),
             money(r.package_count),
@@ -844,7 +850,7 @@ function renderTable() {
         headers = ["Mã phiếu xuất","Đơn hàng","Nhân viên","Ngày tạo","Số kiện","Trạng thái","Thao tác"];
 
         rows = filtered.map(r => [
-            `<b>${esc(r.shipping_code)}</b>`,
+            `<b>${esc(r.master_code || r.shipping_code)}</b><br><small>${esc(r.shipping_code)}</small>`,
             esc(r.order_code),
             esc(r.employee_name),
             esc(r.created_time),
@@ -868,8 +874,17 @@ function actionButtons(row) {
 
     let buttons = `<button class="btn btn-light" onclick="viewDetails(${Number(id)})">Chi tiết</button>`;
 
-    if (status === "PENDING") {
+    if (status === "PENDING" && ["receiving", "picking"].includes(stage)) {
         buttons += `<button class="btn btn-primary" onclick="startTask(${Number(id)})">Bắt đầu</button>`;
+    }
+    if (status === "PENDING" && stage === "putaway") {
+        buttons += `<button class="btn btn-success" onclick="completePutawayWithLocation(${Number(id)})">Hoàn tất</button>`;
+    }
+    if (status === "PENDING" && stage === "packing") {
+        buttons += `<button class="btn btn-success" onclick="completePacking(${Number(id)})">Hoàn tất đóng gói</button>`;
+    }
+    if (status === "PENDING" && stage === "shipping") {
+        buttons += `<button class="btn btn-success" onclick="showShipmentForm(${Number(id)})">Hoàn tất xuất hàng</button>`;
     }
 
     if (status === "IN_PROGRESS") {
@@ -878,19 +893,19 @@ function actionButtons(row) {
         }
 
         if (stage === "putaway") {
-            buttons += `<button class="btn btn-success" onclick="completeSimple(${Number(id)})">Hoàn tất</button>`;
+            buttons += `<button class="btn btn-success" onclick="completePutawayWithLocation(${Number(id)})">Hoàn tất</button>`;
         }
 
         if (stage === "picking") {
-            buttons += `<button class="btn btn-success" onclick="completePicking(${Number(id)})">Xác nhận lấy hàng</button>`;
+            buttons += `<button class="btn btn-success" onclick="completePicking(${Number(id)})">Hoàn tất lấy hàng</button>`;
         }
 
         if (stage === "packing") {
-            buttons += `<button class="btn btn-success" onclick="completePacking(${Number(id)})">Đóng gói</button>`;
+            buttons += `<button class="btn btn-success" onclick="completePacking(${Number(id)})">Hoàn tất đóng gói</button>`;
         }
 
         if (stage === "shipping") {
-            buttons += `<button class="btn btn-success" onclick="showShipmentForm(${Number(id)})">Tạo chuyến xe</button>`;
+            buttons += `<button class="btn btn-success" onclick="showShipmentForm(${Number(id)})">Hoàn tất xuất hàng</button>`;
         }
     }
 
@@ -1214,6 +1229,28 @@ async function submitReceivingQC(id) {
     } catch(e) {
         toast(e.message);
     }
+}
+
+// Chỉ phân vị trí tại bước Cất hàng, phiếu đã được tự chuyển từ QC.
+async function completePutawayWithLocation(id) {
+    const task = records.find(r => Number(r.putaway_id) === Number(id));
+    if (!task) return toast("Không tìm thấy nhiệm vụ cất hàng.");
+    if (task.destination_location_id) return completeSimple(id);
+    const locations = (db.locations || []).filter(x => String(x.location_code).startsWith("STO"));
+    openModal("Hoàn tất cất hàng – " + esc(task.master_code || task.putaway_code), `
+        <p>Hàng QC đạt: <b>${esc(task.product_name)}</b> – ${money(task.quantity)} thùng.</p>
+        <div class="field"><label>Vị trí lưu trữ STO *</label>
+        <select id="putawayDestination">${selectOptions(locations,"location_id",x=>x.location_code)}</select></div>
+        <div class="form-actions"><button class="btn btn-success" onclick="confirmPutawayDestination(${Number(id)})">Hoàn tất và nhập tồn kho</button></div>
+    `);
+}
+async function confirmPutawayDestination(id) {
+    const destination_location_id = Number(document.getElementById("putawayDestination")?.value);
+    if (!destination_location_id) return toast("Vui lòng chọn vị trí STO.");
+    try {
+        const result = await postJson("putaway", {action:"complete",putaway_id:id,destination_location_id});
+        closeModal(); toast(result.message || "Đã cất hàng."); await loadData();
+    } catch(e) { toast(e.message); }
 }
 
 /* =========================
@@ -2250,6 +2287,7 @@ async function viewDetails(id) {
         `;
     }
 
+    html = `<p><b>Phiếu nghiệp vụ:</b> ${esc(row.master_code || row[cfg.code])}</p>` + html;
     openModal("Chi tiết công đoạn",html);
 }
 

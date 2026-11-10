@@ -1,0 +1,23 @@
+SMARTWMS – PHIÊN BẢN 2 PHIẾU CHÍNH / 5 CÔNG ĐOẠN
+
+1. Chỉ tạo phiếu thủ công tại Nhận hàng (NK-...) và Lấy hàng (XK-...).
+2. Hoàn tất Nhận hàng/QC: tự tạo nhiệm vụ Cất hàng từ lượng QC đạt.
+3. Cất hàng: nhấn Hoàn tất, chọn vị trí STO và xác nhận; không cần tạo phiếu hoặc nhấn Bắt đầu.
+4. Hoàn tất Lấy hàng: tự tạo nhiệm vụ Đóng gói.
+5. Đóng gói: nhấn Hoàn tất, khai báo các kiện và xác nhận; tự chuyển sang Xuất hàng.
+6. Xuất hàng: nhấn Hoàn tất xuất hàng, chọn kiện và thông tin chuyến xe; không cần tạo phiếu hoặc nhấn Bắt đầu.
+7. Giữ mã NK/XK trong toàn luồng; mã RCV/PUT/PCK/PKG/SHP được giữ nội bộ để phục vụ lịch sử, thống kê và AI.
+8. Nhiệm vụ được tạo và lưu cùng lần xác nhận hoàn tất; tải lại trang không sinh nhiệm vụ trùng.
+9. Kịch bản mô phỏng/CSV giữ nguyên quy trình dựng dữ liệu riêng.
+10. Dữ liệu cũ trong localStorage vẫn đọc được; các phiếu cũ không có mã NK/XK vẫn hiển thị mã cũ.
+
+CẬP NHẬT WEBSITE:
+- Sao lưu dữ liệu bằng chức năng xuất dữ liệu nếu có, hoặc sao lưu localStorage.
+- Giải nén, tải TOÀN BỘ file trong thư mục lên nhánh GitHub Pages của repository.
+- Chờ GitHub Pages cập nhật, sau đó Ctrl+F5 để xóa cache.
+- Không xóa localStorage nếu muốn giữ dữ liệu cũ.
+
+LƯU Ý:
+- Đây là ứng dụng demo lưu dữ liệu trong localStorage của từng trình duyệt; không đồng bộ thời gian thực giữa nhiều máy.
+- Những phiếu đã tạo trước khi nâng cấp không được tự động chuyển ngược sang luồng mới.
+- Nên thử quy trình trên bản demo sao chép trước khi cập nhật trang đang dùng.
