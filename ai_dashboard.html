@@ -512,6 +512,8 @@
             const stats = WmsDemo.analysis();
 const state = JSON.parse(WmsDemo.exportData());
 
+
+
 function countSku(stage) {
     const collections = {
         receiving: "receipts",
@@ -530,8 +532,35 @@ function countSku(stage) {
     const productIds = new Set();
 
     function addProduct(id) {
-        if (id !== null && id !== undefined && id !== "") {
+        if (id !== null &&
+            id !== undefined &&
+            String(id).trim() !== "") {
             productIds.add(String(id));
+        }
+    }
+
+    function addBatchProduct(batch) {
+        if (!batch) return;
+
+        if (batch.product_id != null) {
+            addProduct(batch.product_id);
+            return;
+        }
+
+        const receipt = (state.receipts || []).find(r =>
+            String(r.receipt_id) === String(batch.receipt_id)
+        );
+
+        if (receipt) {
+            (receipt.items || []).forEach(item => {
+                if (
+                    batch.receiving_item_id == null ||
+                    String(item.receiving_item_id) ===
+                    String(batch.receiving_item_id)
+                ) {
+                    addProduct(item.product_id);
+                }
+            });
         }
     }
 
@@ -544,38 +573,48 @@ function countSku(stage) {
 
         if (stage === "putaway") {
             const batch = (state.batches || []).find(b =>
-                Number(b.batch_id) === Number(task.batch_id)
+                String(b.batch_id) === String(task.batch_id)
             );
-            if (batch) addProduct(batch.product_id);
+
+            addBatchProduct(batch);
         }
 
         if (["picking", "packing", "shipping"].includes(stage)) {
             const order = (state.orders || []).find(o =>
-                Number(o.order_id) === Number(task.order_id)
+                String(o.order_id) === String(task.order_id)
             );
+
             if (order) addProduct(order.product_id);
         }
     }
 
-if (stage === "packing") {
-    const readyPickings = (state.pickings || [])
-        .filter(p =>
-            p.status === "COMPLETED" &&
-            !(state.packings || []).some(t =>
-                String(t.order_id) === String(p.order_id)
+    // Cất hàng: bổ sung các lô đã nhận nhưng còn chờ cất.
+    if (stage === "putaway") {
+        (state.batches || [])
+            .filter(batch =>
+                Number(batch.available_qty) > 0
             )
-        );
+            .forEach(addBatchProduct);
+    }
 
-    readyPickings.forEach(picking => {
-        const order = (state.orders || []).find(o =>
-            String(o.order_id) === String(picking.order_id)
-        );
+    // Đóng gói: bổ sung đơn đã lấy hàng nhưng chưa đóng gói.
+    if (stage === "packing") {
+        const readyPickings = (state.pickings || [])
+            .filter(p =>
+                p.status === "COMPLETED" &&
+                !(state.packings || []).some(t =>
+                    String(t.order_id) === String(p.order_id)
+                )
+            );
 
-        if (order) {
-            addProduct(order.product_id);
-        }
-    });
-}
+        readyPickings.forEach(picking => {
+            const order = (state.orders || []).find(o =>
+                String(o.order_id) === String(picking.order_id)
+            );
+
+            if (order) addProduct(order.product_id);
+        });
+    }
 
     return productIds.size > 0 ? productIds.size : null;
 }
