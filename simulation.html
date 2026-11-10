@@ -478,10 +478,44 @@ Dữ liệu được nhập và xử lý trên SmartWMS, không phải dữ li�
 <p>Dữ liệu trên website là dữ liệu mô phỏng.</p>
 </footer>
 </main>
-
 <style>
-/* DÁN TOÀN BỘ CSS MỚI VÀO ĐÂY */
+
+/* GIAO DIEN THIET LAP KICH BAN - CSS DAY DU */
+.sim-scenario-panel{margin:24px 0 30px;padding:26px;background:#f7faff;border:1px solid #dbe7f3;border-radius:20px;color:#223e5b;box-shadow:0 5px 22px rgba(30,65,102,.05)}
+.sim-scenario-head{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:23px}
+.scenario-eyebrow,.scenario-label{display:block;color:#2479bb;font-size:10px;font-weight:800;letter-spacing:1.2px}
+.sim-scenario-head h2{margin:7px 0;color:#173b5b;font-size:24px;line-height:1.3}
+.sim-scenario-head p{margin:0;color:#71879d;font-size:13px;line-height:1.6}
+.scenario-chip{padding:10px 14px;border:1px solid #d7e6f3;border-radius:30px;background:#fff;color:#24816a;font-size:12px;font-weight:700;white-space:nowrap}
+.sim-scenario-body{display:grid;grid-template-columns:minmax(290px,.85fr) minmax(0,1.55fr);gap:16px;align-items:stretch}
+.sim-scenario-card{min-width:0;padding:22px;background:#fff;border:1px solid #e0eaf4;border-radius:15px;box-shadow:0 3px 12px rgba(30,65,102,.04)}
+.scenario-card-title{display:flex;align-items:center;gap:12px;margin-bottom:22px}
+.scenario-number{display:grid;place-items:center;flex-shrink:0;width:40px;height:40px;border-radius:11px;background:#eaf4ff;color:#1771b5;font-size:13px;font-weight:800}
+.scenario-card-title h3{margin:4px 0 0;color:#203e5d;font-size:18px}
+.scenario-fields{display:grid;gap:18px}
+.sim-scenario-card label{display:block;color:#42617e;font-size:12px;font-weight:700}
+.sim-scenario-card label small{color:#7c91a5;font-size:11px;font-weight:400}
+.sim-scenario-card input,.sim-scenario-card select{display:block;box-sizing:border-box;width:100%;min-width:0;min-height:44px;margin-top:9px;padding:11px 12px;border:1px solid #d1dfed;border-radius:9px;background:#fff;color:#244766;font:inherit;font-size:13px}
+.sim-scenario-card input:focus,.sim-scenario-card select:focus{outline:none;border-color:#2383c8;box-shadow:0 0 0 3px rgba(35,131,200,.12)}
+.scenario-two-cols{display:grid;grid-template-columns:1fr 1.15fr;gap:12px}
+.scenario-hint{margin:20px 0;padding:12px;border-radius:9px;background:#f3f8fd;color:#64809a;font-size:12px;line-height:1.6}
+#scenario-save-all{display:block;width:100%;min-height:46px;padding:13px 16px;border:0;border-radius:10px;background:#1876b9;color:#fff;font-size:13px;font-weight:700;cursor:pointer}
+#scenario-save-all:hover{background:#0f619d}
+#scenario-capacity-status{margin:10px 0 0;color:#376a79;font-size:12px}
+#rf-config-container>h2,#rf-config-container>.card-note{display:none!important}
+#rf-config-container .table-wrap{overflow-x:auto;border:1px solid #e5edf5;border-radius:10px}
+#rf-config-container table{width:100%;min-width:570px;border-collapse:collapse;font-size:12px}
+#rf-config-container th{padding:12px 9px;background:#f2f7fc;color:#5a7691;text-align:left;font-size:11px}
+#rf-config-container td{padding:9px;border-bottom:1px solid #e9eff6}
+#rf-config-container td input,#rf-config-container td select{min-width:85px;min-height:38px;margin:0;padding:7px 8px;font-size:12px}
+#rf-config-container button[type=submit]{display:none!important}
+.sim-scenario-foot{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;padding-top:18px;color:#738ba2;font-size:12px}
+.sim-scenario-foot>div{display:flex;flex-wrap:wrap;gap:15px}
+.sim-scenario-foot a{color:#1876b9;font-weight:700;text-decoration:none}
+@media(max-width:1080px){.sim-scenario-body{grid-template-columns:1fr}}
+@media(max-width:600px){.sim-scenario-panel{padding:16px}.sim-scenario-head h2{font-size:20px}.scenario-chip{display:none}.sim-scenario-card{padding:16px}.scenario-two-cols{grid-template-columns:1fr}}
 </style>
+
 <script src="wms-demo.js?v=20261110b"></script>
 <script src="rf_browser.js?v=1"></script>
 <script src="rf_config.js?v=3"></script>
