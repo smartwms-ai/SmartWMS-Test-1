@@ -68,33 +68,35 @@ const WmsDemo = (() => {
         }
     ];
 
+    // Danh mục dữ liệu mẫu cho bản demo; không đại diện đối tác/nhân viên thật.
     const suppliers = [
-        {
-            supplier_id: 1,
-            supplier_name: "Nhà cung cấp mô phỏng"
-        }
+        { supplier_id: 1, supplier_name: "Công ty TNHH Cung ứng An Phát (mô phỏng)" },
+        { supplier_id: 2, supplier_name: "Công ty CP Phân phối Minh Long (mô phỏng)" },
+        { supplier_id: 3, supplier_name: "Công ty TNHH Logistics Đại Tín (mô phỏng)" },
+        { supplier_id: 4, supplier_name: "Công ty CP Thương mại Hưng Thịnh (mô phỏng)" },
+        { supplier_id: 5, supplier_name: "Công ty TNHH Sản xuất Bình An (mô phỏng)" },
+        { supplier_id: 6, supplier_name: "Công ty CP Hàng tiêu dùng Việt Phú (mô phỏng)" }
     ];
 
     const employees = [
-        {
-            employee_id: 1,
-            employee_name: "Nhân viên kho"
-        }
+        { employee_id: 1, employee_name: "NV001 - Nguyễn Minh Anh" },
+        { employee_id: 2, employee_name: "NV002 - Trần Quốc Bảo" },
+        { employee_id: 3, employee_name: "NV003 - Lê Hoàng Phúc" },
+        { employee_id: 4, employee_name: "NV004 - Phạm Ngọc Linh" },
+        { employee_id: 5, employee_name: "NV005 - Võ Thanh Tùng" },
+        { employee_id: 6, employee_name: "NV006 - Đặng Thùy Trang" },
+        { employee_id: 7, employee_name: "NV007 - Bùi Đức Huy" },
+        { employee_id: 8, employee_name: "NV008 - Đỗ Mỹ Duyên" }
     ];
 
     const locations = [
-        {
-            location_id: 1,
-            location_code: "DOCK-01"
-        },
-        {
-            location_id: 2,
-            location_code: "STO-A01"
-        },
-        {
-            location_id: 3,
-            location_code: "STO-A02"
-        }
+        { location_id: 1, location_code: "DOCK-01" },
+        { location_id: 2, location_code: "STO-A01" },
+        { location_id: 3, location_code: "STO-A02" },
+        { location_id: 4, location_code: "DOCK-02" },
+        { location_id: 5, location_code: "DOCK-03" },
+        { location_id: 6, location_code: "DOCK-04" },
+        { location_id: 7, location_code: "DOCK-05" }
     ];
 
     const orders = Array.from(
