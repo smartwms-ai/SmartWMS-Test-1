@@ -770,7 +770,7 @@ body[data-mode="bottleneck"] {
     <section class="bn-panel">
       <div class="bn-panel-head">
         <div>
-          <h2>Thiết lập kịch bản vận hành</h2>
+          <h2>Kịch bản vận hành đang áp dụng</h2>
           <p>
             Năng lực được thiết lập tập trung tại trang Mô phỏng kho.
             Kết quả ở đây tự tính lại từ dữ liệu đã lưu.
@@ -778,53 +778,8 @@ body[data-mode="bottleneck"] {
         </div>
       </div>
 
-      <p><a class="bn-btn" href="simulation.html#scenario-settings" style="display:inline-block;text-decoration:none">Chỉnh sửa kịch bản vận hành</a></p>
-      <div hidden aria-hidden="true"><form class="bn-form" id="bn-capacity-form">
-        <label class="bn-field full">
-          Công đoạn
-          <select name="stage" id="bn-stage" required>
-            <option value="receiving">Nhận hàng</option>
-            <option value="putaway">Cất hàng</option>
-            <option value="picking">Lấy hàng</option>
-            <option value="packing">Đóng gói</option>
-            <option value="shipping">Xuất hàng</option>
-          </select>
-        </label>
-
-        <label class="bn-field">
-          Số nhân viên
-          <input
-            type="number"
-            name="workers"
-            id="bn-workers"
-            min="1"
-            max="20"
-            step="1"
-            required
-          >
-        </label>
-
-        <label class="bn-field">
-          Năng suất (thùng/người/giờ)
-          <input
-            type="number"
-            name="perHour"
-            id="bn-per-hour"
-            min="1"
-            max="500"
-            step="1"
-            required
-          >
-        </label>
-
-        <button class="bn-btn" type="submit">
-          Áp dụng năng lực mới
-        </button>
-      </form>
-
-      <p class="bn-form-status"
-         id="bn-capacity-status"
-         role="status"></p></div>
+      <p id="bn-current-scenario" class="bn-form-status">Kết quả sử dụng năng lực đã lưu của từng công đoạn.</p><p><a class="bn-btn" href="simulation.html#scenario-settings" style="display:inline-block;text-decoration:none">Chỉnh sửa kịch bản vận hành</a></p>
+      
     </section>
 
     <section class="bn-panel">
@@ -856,7 +811,7 @@ body[data-mode="bottleneck"] {
 </main>
 
 <!-- SHARED DATA SOURCE -->
-<script src="wms-demo.js?v=10"></script>
+<script src="wms-demo.js?v=20261110b"></script>
 
 <script>
 (function () {
@@ -942,15 +897,7 @@ body[data-mode="bottleneck"] {
     $("bn-error").hidden = true;
   }
 
-  function fillCapacityForm() {
-    const stage = $("bn-stage").value;
-    const item = stats.find(row => row.stage === stage);
-
-    if (!item) return;
-
-    $("bn-workers").value = item.workers;
-    $("bn-per-hour").value = item.perHour;
-  }
+  function fillCapacityForm() {}
 
   function render() {
     // wms-demo.js declares WmsDemo using top-level const.
@@ -1321,80 +1268,7 @@ value: hasWorkload && risk !== "LOW"
     fillCapacityForm();
   }
 
-  // ===== CHANGE SELECTED STAGE =====
-
-  $("bn-stage").addEventListener(
-    "change",
-    function () {
-      fillCapacityForm();
-      $("bn-capacity-status").textContent = "";
-    }
-  );
-
-  // ===== SAVE CAPACITY =====
-
-  $("bn-capacity-form").addEventListener(
-    "submit",
-    async function (event) {
-      event.preventDefault();
-
-      const stage = $("bn-stage").value;
-      const workers = Number($("bn-workers").value);
-      const perHour = Number($("bn-per-hour").value);
-      const status = $("bn-capacity-status");
-
-      if (
-        !Object.prototype.hasOwnProperty.call(names, stage)
-      ) {
-        status.textContent = "Công đoạn không hợp lệ.";
-        return;
-      }
-
-      if (
-        !Number.isInteger(workers) ||
-        workers < 1 ||
-        workers > 20 ||
-        !Number.isInteger(perHour) ||
-        perHour < 1 ||
-        perHour > 500
-      ) {
-        status.textContent =
-          "Nhập 1–20 nhân viên và " +
-          "1–500 thùng/người/giờ.";
-        return;
-      }
-
-      const button = this.querySelector(
-        'button[type="submit"]'
-      );
-
-      button.disabled = true;
-      status.textContent = "Đang cập nhật năng lực...";
-
-      try {
-        await WmsDemo.setCapacity(
-          stage,
-          workers,
-          perHour
-        );
-
-        render();
-
-        status.textContent =
-          "Đã cập nhật năng lực cho " +
-          names[stage] +
-          ". Kết quả phân tích đã được tính lại.";
-      } catch (error) {
-        console.error("Capacity update error:", error);
-
-        status.textContent =
-          "Không thể cập nhật: " +
-          (error.message || "Lỗi không xác định");
-      } finally {
-        button.disabled = false;
-      }
-    }
-  );
+  // Năng lực chỉ được chỉnh tại Mô phỏng kho.
 
   // ===== INITIALIZATION =====
 

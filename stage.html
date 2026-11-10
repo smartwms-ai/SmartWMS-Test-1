@@ -582,7 +582,7 @@ tr:last-child td {
 <div id="modalRoot"></div>
 <div id="toastRoot"></div>
 
-<script src="wms-demo.js?v=10"></script>
+<script src="wms-demo.js?v=20261110b"></script>
 <script>
 const params = new URLSearchParams(location.search);
 const requestedStage = (params.get("stage") || "receiving").toLowerCase();
@@ -865,7 +865,7 @@ function renderTable() {
 
     document.getElementById("tableBody").innerHTML = rows.length
         ? rows.map(row => `<tr>${row.map(cell => `<td>${cell}</td>`).join("")}</tr>`).join("")
-        : `<tr><td colspan="${headers.length}" class="empty">Chưa có dữ liệu phù hợp.</td></tr>`;
+        : `<tr><td colspan="${headers.length}" class="empty">Chưa có phiếu phù hợp. Phiếu chỉ xuất hiện khi công đoạn trước đã hoàn tất và chuyển tiếp.</td></tr>`;
 }
 
 function actionButtons(row) {
@@ -2287,7 +2287,16 @@ async function viewDetails(id) {
         `;
     }
 
-    html = `<p><b>Phiếu nghiệp vụ:</b> ${esc(row.master_code || row[cfg.code])}</p>` + html;
+    const flow = stage === "receiving" || stage === "putaway"
+        ? ["receiving", "putaway"] : ["picking", "packing", "shipping"];
+    const labels = {receiving:"Nhận hàng",putaway:"Cất hàng",picking:"Lấy hàng",packing:"Đóng gói",shipping:"Xuất hàng"};
+    const progress = flow.map((part, index) => {
+        const current = flow.indexOf(stage);
+        const stateLabel = index < current ? "Đã chuyển" : index === current ? statusText(row.status) : "Chưa nhận";
+        const color = index < current ? "#167647" : index === current ? "#1763ad" : "#64748b";
+        return `<span style="display:inline-block;padding:8px 10px;border:1px solid #dbe4ef;border-radius:8px;margin:3px;color:${color}">${index+1}. ${labels[part]} · ${stateLabel}</span>`;
+    }).join(" → ");
+    html = `<p><b>Phiếu nghiệp vụ:</b> ${esc(row.master_code || row[cfg.code])}</p><div style="margin:12px 0" aria-label="Tiến độ phiếu">${progress}</div>` + html;
     openModal("Chi tiết công đoạn",html);
 }
 

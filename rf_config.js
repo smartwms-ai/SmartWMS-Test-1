@@ -88,6 +88,7 @@
         target.appendChild(note);
 
         const form = document.createElement("form");
+        form.id = "rf-scenario-form";
 
         const tableWrap = document.createElement("div");
         tableWrap.className = "table-wrap";
@@ -179,6 +180,10 @@
         button.textContent = "Lưu cấu hình AI";
         button.style.marginTop = "16px";
         form.appendChild(button);
+        if (document.getElementById("scenario-capacity-form")) {
+            button.hidden = true;
+            button.setAttribute("aria-hidden", "true");
+        }
 
         const message = document.createElement("p");
         message.className = "card-note";
@@ -258,6 +263,8 @@
 
     window.RFConfig = {
         get,
+        read,
+        save,
         render
     };
 

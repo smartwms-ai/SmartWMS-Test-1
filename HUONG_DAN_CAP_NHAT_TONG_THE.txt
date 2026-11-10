@@ -1,0 +1,12 @@
+SMARTWMS - CAP NHAT GIAO DIEN VA KICH BAN 10/11/2026
+
+1. Mot nut Luu va ap dung kich ban tai simulation.html#scenario-settings.
+2. Luu nang luc cong doan dang chon va tat ca bien AI trong mot thao tac.
+3. Trang diem nghen khong con form nang luc an cu va JS xu ly du thua.
+4. Dong bo cache busting wms-demo.js cho cac trang HTML.
+5. Chi tiet phieu tai stage.html co thanh tien do tham khao.
+6. Khong sua logic chuyen phieu, ton kho, AI Random Forest hay du lieu da luu.
+
+HUONG DAN: Giai nen ZIP, upload cac file va thu muc ben trong SmartWMS-Test-1-main vao ROOT repo GitHub, commit, cho Pages cap nhat, Ctrl+F5.
+KIEM THU: Mo simulation.html#scenario-settings, doi so nhan vien, chinh AI, nhan Luu va ap dung kich ban, mo ai_dashboard.html va bottleneck_analysis.html de kiem tra.
+Luu y: Trang AI va diem nghen su dung hai phep tinh khac nhau; thay doi bien AI khong nhat thiet lam thay doi % nghen.
