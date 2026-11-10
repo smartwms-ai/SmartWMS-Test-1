@@ -41,7 +41,12 @@
         }
         results.innerHTML = html;
         const form = document.getElementById('capacity-form');
-        if (form) {
+      if (
+    form &&
+    form.elements.namedItem('stage') &&
+    form.elements.namedItem('workers') &&
+    form.elements.namedItem('perHour')
+) {
             function fill() {
                 const selected = stats.find(s=>s.stage===form.elements.stage.value);
                 form.elements.workers.value = selected.workers;
