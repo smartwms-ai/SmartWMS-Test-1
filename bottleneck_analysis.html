@@ -1251,21 +1251,7 @@ value: hasWorkload && risk !== "LOW"
     // ===== CAPACITY FORM =====
     // Keep the user's selected stage when data refreshes.
 
-    const select = $("bn-stage");
-
-    if (!initialized) {
-      select.value = hasWorkload
-        ? worst.stage
-        : "receiving";
-
-      initialized = true;
-    }
-
-    if (!stats.some(item => item.stage === select.value)) {
-      select.value = worst.stage;
-    }
-
-    fillCapacityForm();
+   
   }
 
   // Năng lực chỉ được chỉnh tại Mô phỏng kho.
