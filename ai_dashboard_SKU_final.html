@@ -1,0 +1,799 @@
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dự đoán AI | SmartWMS</title>
+
+    <link rel="stylesheet" href="style.css?v=7">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="smartwms-unified.css?v=1">
+<style>
+/* Tinh gọn giao diện phần thông số AI, không thay đổi thuật toán */
+.ai-load-strip{display:flex;align-items:center;gap:16px;padding:18px 22px;margin:16px 0 18px;background:#fff;border:1px solid #dfe8f2;border-radius:15px;box-shadow:0 3px 12px rgba(30,60,90,.035)}
+.ai-load-icon,.ai-input-icon{display:grid;place-items:center;flex:0 0 42px;height:42px;border-radius:12px;background:#eaf4fd;color:#2075b8;font-size:22px}
+.ai-load-content{min-width:0;flex:1}.ai-load-label{font-size:10px;font-weight:800;letter-spacing:1.2px;color:#7c91a8;margin-bottom:5px}
+#video-summary{font-size:14px;font-weight:700;color:#254866;margin:0;line-height:1.6}
+.ai-load-link{flex-shrink:0;border:1px solid #d8e6f2;border-radius:9px;padding:10px 13px;color:#2375b2;text-decoration:none;font-size:12px;font-weight:700}
+.ai-input-details{margin:0 0 20px;border:1px solid #dfe8f2;border-radius:15px;background:#fff;overflow:hidden}
+.ai-input-details>summary{display:flex;align-items:center;gap:14px;padding:18px 22px;cursor:pointer;list-style:none}
+.ai-input-details>summary::-webkit-details-marker{display:none}
+.ai-input-heading{display:flex;flex-direction:column;gap:5px;flex:1;min-width:0}
+.ai-input-heading strong{font-size:15px;color:#244867}
+.ai-input-heading small{font-size:11px;color:#8496a9;line-height:1.6}
+.ai-input-toggle{font-size:12px;color:#2075b8;font-weight:700;white-space:nowrap}
+.ai-chevron{font-size:17px;margin-left:5px;display:inline-block;transition:transform .2s}
+.ai-input-details[open] .ai-chevron{transform:rotate(180deg)}
+.ai-input-inner{border-top:1px solid #e9eff6;padding:18px 22px 22px}
+.ai-input-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:15px;font-size:12px;color:#6f869d}
+.ai-input-toolbar a{color:#2075b8;font-weight:700;text-decoration:none}
+#rf-input-status .table-wrap{overflow-x:auto;border:1px solid #e4edf5;border-radius:10px}
+#rf-input-status table{width:100%;min-width:730px;border-collapse:collapse;font-size:12px}
+#rf-input-status th{background:#f4f8fc;color:#5c7892;font-size:11px;text-align:left;padding:12px 10px;white-space:nowrap}
+#rf-input-status td{border-bottom:1px solid #e8eef5;padding:11px 10px;color:#3d5b77}
+#rf-input-status tbody tr:nth-child(even){background:#fbfdff}
+#rf-input-status tbody tr:last-child td{border-bottom:0}
+#rf-input-status .card-note{font-size:11px;color:#8a9caf;margin:12px 0 0}
+@media(max-width:650px){.ai-load-strip{padding:15px;gap:10px;flex-wrap:wrap}.ai-load-link{margin-left:52px}.ai-input-details>summary{padding:15px;gap:10px}.ai-input-heading small{display:none}.ai-input-toggle{font-size:11px}.ai-input-inner{padding:15px}}
+</style>
+<style>
+/* Ẩn ghi chú kỹ thuật trong thẻ đã dự đoán; giữ lý do thiếu dữ liệu. */
+#rf-prediction-results > div:has(h2) .card-note { display: none !important; }
+</style>
+</head>
+
+<body data-mode="ai">
+
+<header class="topbar">
+    <div class="brand">
+        <span class="brand-icon">W</span>
+        <div>
+            <h2>WAREHOUSE</h2>
+            <small>Management System</small>
+        </div>
+    </div>
+
+    <nav class="navigation" aria-label="Điều hướng chính">
+        <a href="index.html">Tổng quan</a>
+        <a href="simulation.html">Kho mô phỏng</a>
+        <a href="stage.html?stage=receiving">Nhận hàng</a>
+        <a href="stage.html?stage=putaway">Cất hàng</a>
+        <a href="stage.html?stage=picking">Lấy hàng</a>
+        <a href="stage.html?stage=packing">Đóng gói</a>
+        <a href="stage.html?stage=shipping">Xuất hàng</a>
+        <a href="ai_dashboard.html" class="active" aria-current="page">
+            Dự đoán AI
+        </a>
+        <a href="bottleneck_analysis.html">Điểm nghẽn</a>
+    </nav>
+
+    <div class="user">
+        <a class="data-import-link" href="import.html">
+            Nhập dữ liệu
+        </a>
+        <span class="avatar">QL</span>
+        <span>Quản lý kho</span>
+    </div>
+</header>
+
+<main class="container">
+
+    <div class="page-heading">
+        <div>
+            <h1>Phân tích thời gian xử lý</h1>
+            <p>
+                Phân tích 5 công đoạn từ dữ liệu phiếu dùng chung.
+            </p>
+        </div>
+
+        <a class="btn" href="index.html">
+            ← Quay lại Tổng quan
+        </a>
+    </div>
+
+    <section class="ai-load-strip" aria-label="Tình trạng tải công đoạn">
+      <div class="ai-load-icon">▥</div>
+      <div class="ai-load-content">
+        <div class="ai-load-label">TÌNH TRẠNG VẬN HÀNH</div>
+        <p id="video-summary">Đang cập nhật tình trạng kho...</p>
+      </div>
+      <a href="bottleneck_analysis.html" class="ai-load-link">Xem điểm nghẽn ↗</a>
+    </section>
+
+    <details class="ai-input-details" id="rf-input-panel">
+      <summary>
+        <span class="ai-input-icon">▤</span>
+        <span class="ai-input-heading">
+          <strong>Dữ liệu đầu vào mô hình</strong>
+          <small>Xem các biến được lấy từ WMS và thông số kịch bản của 5 công đoạn</small>
+        </span>
+        <span class="ai-input-toggle">Xem chi tiết <span class="ai-chevron">⌄</span></span>
+      </summary>
+      <div class="ai-input-inner">
+        <div class="ai-input-toolbar">
+          <span>Thông số phục vụ kiểm tra đầu vào Random Forest</span>
+          <a href="simulation.html#scenario-settings">Điều chỉnh kịch bản ↗</a>
+        </div>
+        <div id="rf-input-status">Đang kiểm tra dữ liệu...</div>
+      </div>
+    </details>
+
+    <section class="panel" id="rf-prediction-panel">
+    <h2>Dự báo thời gian xử lý — Random Forest</h2>
+    <p class="card-note">
+        Kết quả dự báo thử nghiệm từ mô hình đã huấn luyện.
+        Không đồng nghĩa với thời gian xử lý thực tế.
+    </p>
+    <div id="rf-prediction-results">
+        Đang chuẩn bị dự báo...
+    </div>
+</section>
+    
+<section class="panel" id="rf-evaluation-panel">
+  <h2>Đánh giá chất lượng mô hình Random Forest</h2>
+
+  <p class="card-note">
+    Kết quả đánh giá offline từ lần huấn luyện thử nghiệm.
+    Không phải kết quả được tính lại từ dữ liệu mô phỏng
+    hiện tại trên website.
+  </p>
+
+  <div style="
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(170px,1fr));
+    gap:14px;
+    margin:18px 0;
+  ">
+    <div style="padding:18px;border:1px solid #dbe4ef;border-radius:12px">
+      <div style="color:#64748b">MAE</div>
+      <h2 style="margin:10px 0">2.68 phút</h2>
+      <small>Sai số tuyệt đối trung bình</small>
+    </div>
+
+    <div style="padding:18px;border:1px solid #dbe4ef;border-radius:12px">
+      <div style="color:#64748b">RMSE</div>
+      <h2 style="margin:10px 0">4.77 phút</h2>
+      <small>Căn bậc hai sai số bình phương trung bình</small>
+    </div>
+
+    <div style="padding:18px;border:1px solid #dbe4ef;border-radius:12px">
+      <div style="color:#64748b">R² Score</div>
+      <h2 style="margin:10px 0">0.978</h2>
+      <small>Độ phù hợp trên tập kiểm thử</small>
+    </div>
+  </div>
+
+  <h3>So sánh mô hình</h3>
+
+  <div class="table-wrap">
+    <table style="width:100%">
+      <thead>
+        <tr>
+          <th>Mô hình</th>
+          <th>MAE</th>
+          <th>RMSE</th>
+          <th>R²</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Baseline</td>
+          <td>23.50</td>
+          <td>32.55</td>
+          <td>-0.038</td>
+        </tr>
+        <tr>
+          <td><strong>Random Forest</strong></td>
+          <td><strong>2.68</strong></td>
+          <td><strong>4.77</strong></td>
+          <td><strong>0.978</strong></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+<h3>Feature Importance — Các yếu tố ảnh hưởng đến AI</h3>
+<p class="card-note">
+  Mức độ quan trọng được trích từ mô hình Random Forest
+  đã huấn luyện. Đây là độ quan trọng của từng đặc trưng,
+  không chứng minh quan hệ nguyên nhân - kết quả.
+</p>
+
+<div id="rf-feature-importance" style="margin:20px 0"></div>
+
+<script>
+(function () {
+  const features = [
+    ["Số lượng hàng chờ", 36.201],
+    ["Công đoạn Nhận hàng", 26.393],
+    ["Số pallet", 17.381],
+    ["Công đoạn Xuất hàng", 6.474],
+    ["Độ phức tạp HIGH", 3.300],
+    ["Số công việc chờ", 2.286],
+    ["Thiết bị hoạt động", 1.551]
+  ];
+
+  const target = document.getElementById(
+    "rf-feature-importance"
+  );
+
+  if (!target) return;
+
+  features.forEach(([name, percent]) => {
+    const wrapper = document.createElement("div");
+    wrapper.style.marginBottom = "14px";
+
+    const label = document.createElement("div");
+    label.style.cssText =
+      "display:flex;justify-content:space-between;" +
+      "gap:12px;margin-bottom:6px";
+
+    const title = document.createElement("span");
+    title.textContent = name;
+
+    const value = document.createElement("strong");
+    value.textContent = percent.toFixed(2) + "%";
+
+    label.append(title, value);
+
+    const track = document.createElement("div");
+    track.style.cssText =
+      "height:12px;background:#e8eef6;" +
+      "border-radius:8px;overflow:hidden";
+
+    const bar = document.createElement("div");
+    bar.style.cssText =
+      "height:100%;background:#2563eb;" +
+      "border-radius:8px";
+    bar.style.width = percent + "%";
+
+    track.appendChild(bar);
+    wrapper.append(label, track);
+    target.appendChild(wrapper);
+  });
+})();
+</script>
+
+<section id="rf-actual-predicted" style="margin:24px 0">
+  <h3>Actual vs Predicted — Thực tế và dự báo</h3>
+  <p class="card-note">
+    So sánh 30 bản ghi kiểm thử từ dữ liệu SQL với
+    kết quả dự báo của Random Forest đã huấn luyện.
+    Đây là đánh giá offline, không phải dữ liệu
+    vận hành trực tiếp trên website.
+  </p>
+
+  <label for="rf-test-stage">
+    <strong>Chọn công đoạn:</strong>
+  </label>
+  <select id="rf-test-stage" style="
+    margin:10px 0 18px;
+    padding:10px;
+    border:1px solid #dbe4ef;
+    border-radius:8px;
+    min-width:180px;
+  ">
+    <option value="RECEIVING">Nhận hàng</option>
+    <option value="PUTAWAY">Cất hàng</option>
+    <option value="PICKING">Lấy hàng</option>
+    <option value="PACKING">Đóng gói</option>
+    <option value="SHIPPING">Xuất hàng</option>
+  </select>
+
+  <div style="display:flex;gap:18px;margin-bottom:14px">
+    <span>🔵 Thực tế</span>
+    <span>🟠 AI dự báo</span>
+  </div>
+
+  <div id="rf-test-chart"></div>
+  <div id="rf-test-summary" class="card-note"></div>
+</section>
+
+<script>
+(function () {
+  "use strict";
+
+  // Mỗi dòng: [công đoạn, thực tế, dự báo]
+  // 30 bản ghi thuộc tập kiểm thử của mô hình RF.
+  const data = [
+    ["PACKING",29,31.32],
+    ["PACKING",37,40.31],
+    ["PACKING",49,48.25],
+    ["PACKING",22,20.72],
+    ["PACKING",30,31.74],
+    ["PACKING",46,46.87],
+
+    ["PICKING",26,24.00],
+    ["PICKING",34,35.41],
+    ["PICKING",48,47.05],
+    ["PICKING",64,61.00],
+    ["PICKING",27,27.43],
+    ["PICKING",37,37.85],
+
+    ["PUTAWAY",42,41.95],
+    ["PUTAWAY",57,58.51],
+    ["PUTAWAY",74,78.50],
+    ["PUTAWAY",34,36.54],
+    ["PUTAWAY",44,46.58],
+    ["PUTAWAY",68,72.06],
+
+    ["RECEIVING",70,72.60],
+    ["RECEIVING",90,83.16],
+    ["RECEIVING",135,127.89],
+    ["RECEIVING",62,60.31],
+    ["RECEIVING",80,75.72],
+    ["RECEIVING",140,118.45],
+
+    ["SHIPPING",12,13.16],
+    ["SHIPPING",15,14.86],
+    ["SHIPPING",20,19.87],
+    ["SHIPPING",10,10.40],
+    ["SHIPPING",13,13.20],
+    ["SHIPPING",18,18.27]
+  ];
+
+  const select = document.getElementById("rf-test-stage");
+  const chart = document.getElementById("rf-test-chart");
+  const summary = document.getElementById("rf-test-summary");
+
+  if (!select || !chart || !summary) return;
+
+  function make(tag, content) {
+    const node = document.createElement(tag);
+    if (content !== undefined) {
+      node.textContent = String(content);
+    }
+    return node;
+  }
+
+  function drawBar(value, max, color) {
+    const track = make("div");
+    track.style.cssText =
+      "height:12px;background:#e8eef6;" +
+      "border-radius:8px;overflow:hidden;" +
+      "flex:1;min-width:0";
+
+    const bar = make("div");
+    bar.style.cssText =
+      "height:100%;border-radius:8px;" +
+      "background:" + color + ";" +
+      "width:" + (value / max * 100) + "%";
+
+    track.appendChild(bar);
+    return track;
+  }
+
+  function render() {
+    const rows = data.filter(
+      item => item[0] === select.value
+    );
+
+    chart.replaceChildren();
+
+    const max = Math.max(
+      ...rows.flatMap(item => [item[1], item[2]])
+    ) * 1.08;
+
+    rows.forEach((item, index) => {
+      const actual = item[1];
+      const predicted = item[2];
+
+      const group = make("div");
+      group.style.cssText =
+        "margin-bottom:16px;padding:12px;" +
+        "border:1px solid #e2e8f0;" +
+        "border-radius:10px";
+
+      const title = make(
+        "strong",
+        "Bản ghi kiểm thử " + (index + 1)
+      );
+      group.appendChild(title);
+
+      [
+        ["Thực tế", actual, "#2563eb"],
+        ["Dự báo", predicted, "#f59e0b"]
+      ].forEach(([label, value, color]) => {
+        const line = make("div");
+        line.style.cssText =
+          "display:flex;align-items:center;" +
+          "gap:10px;margin-top:10px";
+
+        const name = make("span", label);
+        name.style.width = "65px";
+
+        const number = make(
+          "strong",
+          value.toFixed(2) + " phút"
+        );
+        number.style.cssText =
+          "min-width:95px;text-align:right";
+
+        line.append(
+          name,
+          drawBar(value, max, color),
+          number
+        );
+
+        group.appendChild(line);
+      });
+
+      chart.appendChild(group);
+    });
+
+    const mae = rows.reduce(
+      (sum, row) => sum + Math.abs(row[1] - row[2]),
+      0
+    ) / rows.length;
+
+    summary.textContent =
+      "Số bản ghi: " + rows.length +
+      " | MAE riêng công đoạn: " +
+      mae.toFixed(2) + " phút." +
+      " Các giá trị dự báo được làm tròn 2 chữ số.";
+  }
+
+  select.addEventListener("change", render);
+  render();
+})();
+</script>
+
+  <h3>Phương pháp đánh giá</h3>
+
+  <p class="card-note">
+    Tổng cộng 150 bản ghi, gồm 120 bản ghi huấn luyện
+    và 30 bản ghi kiểm thử. Mô hình được đánh giá bằng
+    MAE, RMSE và R².
+  </p>
+
+  <p style="
+    padding:12px;
+    border:1px solid #fcd34d;
+    background:#fffbeb;
+    border-radius:8px;
+    color:#92400e;
+  ">
+    Lưu ý: Đây là kết quả của lần huấn luyện thử nghiệm
+    trên bộ dữ liệu nhỏ. Chưa chứng minh khả năng tổng quát
+    trên dữ liệu kho thực tế hoặc các kịch bản nằm ngoài
+    phạm vi huấn luyện.
+  </p>
+</section>
+
+    <div id="video-results"></div>
+
+</main>
+
+<!-- Nạp các thư viện trước -->
+<script src="wms-demo.js?v=20261110b"></script>
+<script src="rf_browser.js?v=1"></script>
+<script src="rf_config.js?v=2"></script>
+<script src="rf_prediction.js?v=20261110sku4" defer></script>
+<script src="wms-video.js?v=7"></script>
+
+<!-- Sau đó mới chạy code kiểm tra dữ liệu AI -->
+<script>
+(function () {
+    "use strict";
+
+    const target = document.getElementById("rf-input-status");
+
+    const labels = {
+        stage: "Công đoạn",
+        waiting_tasks: "Số công việc chờ",
+        waiting_quantity: "Số lượng chờ",
+        employee_count: "Số nhân viên",
+        sku_count: "Số SKU",
+        pallet_count: "Số pallet",
+        order_count: "Số đơn hàng",
+        active_equipment_count: "Thiết bị hoạt động",
+        shift: "Ca làm việc",
+        complexity_level: "Độ phức tạp"
+    };
+
+    const stageNames = {
+        receiving: "Nhận hàng",
+        putaway: "Cất hàng",
+        picking: "Lấy hàng",
+        packing: "Đóng gói",
+        shipping: "Xuất hàng"
+    };
+
+    function renderRFInputs() {
+        try {
+           if (
+    typeof WmsDemo === "undefined" ||
+    typeof WmsDemo.analysis !== "function"
+) {
+    throw new Error("Chưa tải được dữ liệu WMS.");
+}
+
+            const stats = WmsDemo.analysis();
+const state = JSON.parse(WmsDemo.exportData());
+
+function countSku(stage) {
+    const skus = new Set();
+    const active = row => ["PENDING", "IN_PROGRESS"].includes(row?.status);
+    const batches = state.batches || [];
+    const receipts = state.receipts || [];
+    const putaways = state.putaways || [];
+    const orders = state.orders || [];
+    const findBatch = id => batches.find(b => String(b.batch_id) === String(id));
+    const findOrder = id => orders.find(o => String(o.order_id) === String(id));
+    const add = row => {
+        if (!row) return;
+        // product_id is the canonical SKU identity in the WMS catalog.
+        const id = row.product_id ?? row.sku ?? row.product_code ?? row.product_name;
+        if (id !== undefined && id !== null && String(id).trim()) {
+            skus.add(String(id).trim());
+        }
+    };
+    const addOrder = id => add(findOrder(id));
+    if (stage === "receiving") {
+        receipts.filter(active).forEach(r => (r.items || []).forEach(add));
+    } else if (stage === "putaway") {
+        putaways.filter(active).forEach(t => {
+            const batch = findBatch(t.batch_id);
+            add(batch || t);
+            // Legacy tasks may only carry batch_code and no batch_id.
+            if (!batch && t.batch_code) {
+                add(batches.find(b => b.batch_code === t.batch_code));
+            }
+        });
+        // WMS counts ready batches in putaway workload, so count their SKUs too.
+        batches.filter(b => Number(b.available_qty) > 0).forEach(add);
+        // A receipt item is only relevant when its batch is in the pending workload.
+        const codes = new Set([
+            ...putaways.filter(active).map(t => t.batch_code).filter(Boolean),
+            ...batches.filter(b => Number(b.available_qty) > 0).map(b => b.batch_code).filter(Boolean)
+        ]);
+        receipts.forEach(r => (r.items || []).forEach(item => {
+            if (codes.has(item.batch_code)) add(item);
+        }));
+    } else if (stage === "picking") {
+        (state.pickings || []).filter(active).forEach(t => addOrder(t.order_id));
+    } else if (stage === "packing") {
+        (state.packings || []).filter(active).forEach(t => addOrder(t.order_id));
+    } else if (stage === "shipping") {
+        (state.shipping_orders || []).filter(active).forEach(t => addOrder(t.order_id));
+    }
+    return skus.size || null;
+}
+
+const stageCollections = {
+    receiving: "receipts",
+    putaway: "putaways",
+    picking: "pickings",
+    packing: "packings",
+    shipping: "shipping_orders"
+};
+
+
+function countOrders(stage) {
+    const activeStatuses = ["PENDING", "IN_PROGRESS"];
+
+    const active = collection =>
+        (state[collection] || []).filter(task =>
+            activeStatuses.includes(task.status)
+        );
+
+    if (stage === "receiving") {
+        return active("receipts").length;
+    }
+
+    if (stage === "putaway") {
+        const taskBatches = active("putaways")
+            .map(t => String(t.batch_id));
+
+        const readyBatches = (state.batches || [])
+            .filter(b => Number(b.available_qty) > 0)
+            .map(b => String(b.batch_id));
+
+        return new Set([
+            ...taskBatches,
+            ...readyBatches
+        ]).size;
+    }
+
+    const orderIds = new Set();
+
+    const addOrder = id => {
+        if (id !== null && id !== undefined && id !== "") {
+            orderIds.add(String(id));
+        }
+    };
+
+    if (stage === "picking") {
+        active("pickings").forEach(t => addOrder(t.order_id));
+
+        (state.orders || []).forEach(order => {
+            const hasPicking = (state.pickings || []).some(p =>
+                String(p.order_id) === String(order.order_id)
+            );
+            if (!hasPicking) addOrder(order.order_id);
+        });
+    }
+
+    if (stage === "packing") {
+        active("packings").forEach(t => addOrder(t.order_id));
+
+        (state.pickings || [])
+            .filter(p => p.status === "COMPLETED")
+            .forEach(p => {
+                const hasPacking = (state.packings || []).some(t =>
+                    String(t.order_id) === String(p.order_id)
+                );
+                if (!hasPacking) addOrder(p.order_id);
+            });
+    }
+
+    if (stage === "shipping") {
+        active("shipping_orders").forEach(t =>
+            addOrder(t.order_id)
+        );
+
+        (state.packings || [])
+            .filter(p => p.status === "COMPLETED")
+            .forEach(p => {
+                const hasShipping = (state.shipping_orders || [])
+                    .some(t =>
+                        String(t.order_id) === String(p.order_id)
+                    );
+
+                if (!hasShipping) {
+                    const hasPackedPackage = (state.packages || [])
+                        .some(pkg =>
+                            String(pkg.packing_id) ===
+                                String(p.packing_id) &&
+                            pkg.status === "PACKED"
+                        );
+
+                    if (hasPackedPackage) addOrder(p.order_id);
+                }
+            });
+    }
+
+  return orderIds.size;
+}
+
+const rows = stats.map(s => {
+    const stage = String(s.stage).toLowerCase();
+
+    // Đọc cấu hình kịch bản do người dùng đã lưu
+    const config = (
+        typeof RFConfig !== "undefined" &&
+        typeof RFConfig.get === "function"
+    ) ? RFConfig.get(stage) : {};
+
+    // Chỉ nhận số nguyên không âm đã được nhập
+    function validNumber(value) {
+        if (value === null ||
+            value === undefined ||
+            value === "") {
+            return null;
+        }
+
+        const number = Number(value);
+
+        return Number.isSafeInteger(number) && number >= 0
+            ? number
+            : null;
+    }
+
+    return {
+        stage: String(s.stage).toUpperCase(),
+        waiting_tasks: s.waiting + s.ready,
+        waiting_quantity: s.waitingQty,
+        employee_count: s.workers,
+        sku_count: countSku(stage),
+        order_count: countOrders(stage),
+
+        // Dữ liệu cấu hình vận hành AI
+        pallet_count: validNumber(config.pallet_count),
+        active_equipment_count:
+            validNumber(config.active_equipment_count),
+        shift: config.shift || null,
+        complexity_level: config.complexity_level || null
+    };
+});
+
+
+
+            const table = document.createElement("table");
+            table.style.width = "100%";
+
+            const thead = document.createElement("thead");
+            const headerRow = document.createElement("tr");
+
+            const firstHeader = document.createElement("th");
+            firstHeader.textContent = "Biến đầu vào";
+            headerRow.appendChild(firstHeader);
+
+            rows.forEach(row => {
+                const th = document.createElement("th");
+                th.textContent =
+                    stageNames[row.stage.toLowerCase()] ||
+                    row.stage;
+                headerRow.appendChild(th);
+            });
+
+            thead.appendChild(headerRow);
+            table.appendChild(thead);
+
+            const tbody = document.createElement("tbody");
+
+            Object.entries(labels).forEach(([key, label]) => {
+                const tr = document.createElement("tr");
+
+                const nameCell = document.createElement("td");
+                nameCell.textContent = label;
+                tr.appendChild(nameCell);
+
+                rows.forEach(row => {
+                    const td = document.createElement("td");
+                    const value = row[key];
+
+                    if (value === null || value === undefined) {
+                        td.textContent = "Chưa có";
+                        td.style.color = "#b45309";
+                    } else {
+                        td.textContent = String(value);
+                    }
+
+                    tr.appendChild(td);
+                });
+
+                tbody.appendChild(tr);
+            });
+
+            table.appendChild(tbody);
+
+            const wrapper = document.createElement("div");
+            wrapper.className = "table-wrap";
+            wrapper.appendChild(table);
+
+            const note = document.createElement("p");
+            note.className = "card-note";
+            note.textContent =
+                "Đây là bảng kiểm tra dữ liệu đầu vào. " +
+                "Chưa chạy dự báo tự động vì một số biến " +
+                "của Random Forest chưa được xác minh.";
+
+            target.replaceChildren(wrapper, note);
+window.WmsRFInputs = rows;
+
+window.dispatchEvent(
+    new Event("rf:inputs-updated")
+);
+        } catch (error) {
+            console.error("Lỗi kiểm tra dữ liệu AI:", error);
+
+            target.textContent =
+                "Không thể đọc dữ liệu WMS: " + error.message;
+        }
+    }
+
+    renderRFInputs();
+
+    // Cập nhật bảng khi dữ liệu WMS thay đổi
+    window.addEventListener("wms:change", renderRFInputs);
+    window.addEventListener("rf:config-change", renderRFInputs);
+    window.addEventListener("pageshow", renderRFInputs);
+
+    window.addEventListener("storage", function (event) {
+        if (event.key === WmsDemo.storageKey) {
+            renderRFInputs();
+        }
+    });
+
+})();
+</script>
+
+<script src="rf_evaluation_verified_REUPLOAD.js?v=1" defer></script>
+</body>
+</html>
